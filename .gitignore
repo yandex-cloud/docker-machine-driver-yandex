@@ -1,0 +1,6 @@
+# IDE-sepcific
+.idea/
+*.iml
+
+# do not include vendor dir
+vendor/
