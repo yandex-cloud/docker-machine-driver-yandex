@@ -39,6 +39,7 @@ type Driver struct {
 	InstanceID    string
 	Labels        []string
 	Memory        int
+	Nat           bool
 	PlatformID    string
 	Preemptible   bool
 	SSHUser       string
@@ -147,6 +148,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "Memory in gigabytes",
 			Value:  defaultMemory,
 		},
+		mcnflag.BoolFlag{
+			EnvVar: "YC_NAT",
+			Name:   "yandex-nat",
+			Usage:  "Assign external (NAT) IP address to a Compute Instance",
+		},
 		mcnflag.StringFlag{
 			EnvVar: "YC_PLATFORM_ID",
 			Name:   "yandex-platform-id",
@@ -188,7 +194,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.BoolFlag{
 			EnvVar: "YC_USE_INTERNAL_IP",
 			Name:   "yandex-use-internal-ip",
-			Usage:  "Use internal Instance IP rather than public one",
+			Usage:  "Use internal Instance IP rather than public one to communicate with machine",
 		},
 		mcnflag.StringFlag{
 			EnvVar: "YC_USERDATA",
@@ -227,6 +233,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.ImageID = flags.String("yandex-image-id")
 	d.Labels = flags.StringSlice("yandex-labels")
 	d.Memory = flags.Int("yandex-memory")
+	d.Nat = flags.Bool("yandex-nat")
 	d.PlatformID = flags.String("yandex-platform-id")
 	d.Preemptible = flags.Bool("yandex-preemptible")
 	d.SSHUser = flags.String("yandex-ssh-user")

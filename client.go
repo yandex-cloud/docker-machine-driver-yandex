@@ -56,12 +56,8 @@ func (c *YCClient) createInstance(d *Driver) error {
 		Labels: d.ParsedLabels(),
 		NetworkInterfaceSpecs: []*compute.NetworkInterfaceSpec{
 			{
-				SubnetId: d.SubnetID,
-				PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{
-					OneToOneNatSpec: &compute.OneToOneNatSpec{
-						IpVersion: compute.IpVersion_IPV4,
-					},
-				},
+				SubnetId:             d.SubnetID,
+				PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{},
 			},
 		},
 		SchedulingPolicy: &compute.SchedulingPolicy{
@@ -70,6 +66,12 @@ func (c *YCClient) createInstance(d *Driver) error {
 		Metadata: map[string]string{
 			"user-data": d.UserData,
 		},
+	}
+
+	if d.Nat {
+		request.NetworkInterfaceSpecs[0].PrimaryV4AddressSpec.OneToOneNatSpec = &compute.OneToOneNatSpec{
+			IpVersion: compute.IpVersion_IPV4,
+		}
 	}
 
 	// TODO support static address assignment
