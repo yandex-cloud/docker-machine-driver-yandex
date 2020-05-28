@@ -3,6 +3,9 @@ package driver
 import (
 	"testing"
 
+	"github.com/docker/machine/libmachine/drivers"
+	"github.com/stretchr/testify/require"
+
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 )
 
@@ -283,6 +286,155 @@ func TestYandexCloudClient_instanceAddresses(t *testing.T) {
 			if gotIPV6 != tt.wantIPV6 {
 				t.Errorf("YCClient.instanceAddresses() gotIPV6 = %v, want %v", gotIPV6, tt.wantIPV6)
 			}
+		})
+	}
+}
+
+func Test_prepareInstanceCreateRequest(t *testing.T) {
+	type args struct {
+		d       *Driver
+		imageID string
+	}
+	var tests = []struct {
+		name string
+		args args
+		want *compute.CreateInstanceRequest
+	}{
+		{
+			name: "a typical instance without nat",
+			args: args{
+				d: &Driver{
+					BaseDriver: &drivers.BaseDriver{
+						MachineName: "foobar-name",
+					},
+					Cores:         2,
+					CoreFraction:  100,
+					DiskSize:      20,
+					DiskType:      "network-hdd",
+					FolderID:      "some-folder-id",
+					Memory:        2,
+					Nat:           false,
+					PlatformID:    "standard-v2",
+					Preemptible:   false,
+					SubnetID:      "foobar-subnet",
+					UseIPv6:       false,
+					UseInternalIP: false,
+					Zone:          "ru-central1-c",
+				},
+				imageID: "foobar-image-id",
+			},
+			want: &compute.CreateInstanceRequest{
+				FolderId:    "some-folder-id",
+				Name:        "foobar-name",
+				Description: "",
+				Labels:      map[string]string{},
+				ZoneId:      "ru-central1-c",
+				PlatformId:  "standard-v2",
+				ResourcesSpec: &compute.ResourcesSpec{
+					Memory:       toBytes(2),
+					Cores:        2,
+					CoreFraction: 100,
+					Gpus:         0,
+				},
+				Metadata: map[string]string{"user-data": ""},
+				BootDiskSpec: &compute.AttachedDiskSpec{
+					AutoDelete: true,
+					Disk: &compute.AttachedDiskSpec_DiskSpec_{
+						DiskSpec: &compute.AttachedDiskSpec_DiskSpec{
+							TypeId: "network-hdd",
+							Size:   toBytes(20),
+							Source: &compute.AttachedDiskSpec_DiskSpec_ImageId{
+								ImageId: "foobar-image-id",
+							},
+						},
+					},
+				},
+				SecondaryDiskSpecs: nil,
+				NetworkInterfaceSpecs: []*compute.NetworkInterfaceSpec{
+					{
+						SubnetId:             "foobar-subnet",
+						PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{},
+						PrimaryV6AddressSpec: nil,
+						SecurityGroupIds:     nil,
+					},
+				},
+				Hostname:         "",
+				ServiceAccountId: "",
+				SchedulingPolicy: &compute.SchedulingPolicy{},
+			},
+		},
+		{
+			name: "instance with nat and ssd disk and user-data",
+			args: args{
+				d: &Driver{
+					BaseDriver: &drivers.BaseDriver{
+						MachineName: "foobar-name",
+					},
+					Cores:         2,
+					CoreFraction:  50,
+					DiskSize:      20,
+					DiskType:      "network-ssd",
+					FolderID:      "some-folder-id",
+					Memory:        2,
+					Nat:           true,
+					PlatformID:    "standard-v2",
+					Preemptible:   false,
+					SubnetID:      "foobar-subnet",
+					UseInternalIP: true,
+					Zone:          "ru-central1-c",
+					UserData:      "my custom userdata",
+				},
+				imageID: "foobar-image-id",
+			},
+			want: &compute.CreateInstanceRequest{
+				FolderId:    "some-folder-id",
+				Name:        "foobar-name",
+				Description: "",
+				Labels:      map[string]string{},
+				ZoneId:      "ru-central1-c",
+				PlatformId:  "standard-v2",
+				ResourcesSpec: &compute.ResourcesSpec{
+					Memory:       toBytes(2),
+					Cores:        2,
+					CoreFraction: 50,
+					Gpus:         0,
+				},
+				Metadata: map[string]string{"user-data": "my custom userdata"},
+				BootDiskSpec: &compute.AttachedDiskSpec{
+					AutoDelete: true,
+					Disk: &compute.AttachedDiskSpec_DiskSpec_{
+						DiskSpec: &compute.AttachedDiskSpec_DiskSpec{
+							TypeId: "network-ssd",
+							Size:   toBytes(20),
+							Source: &compute.AttachedDiskSpec_DiskSpec_ImageId{
+								ImageId: "foobar-image-id",
+							},
+						},
+					},
+				},
+				SecondaryDiskSpecs: nil,
+				NetworkInterfaceSpecs: []*compute.NetworkInterfaceSpec{
+					{
+						SubnetId: "foobar-subnet",
+						PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{
+							OneToOneNatSpec: &compute.OneToOneNatSpec{
+								IpVersion: compute.IpVersion_IPV4,
+							},
+						},
+						PrimaryV6AddressSpec: nil,
+						SecurityGroupIds:     nil,
+					},
+				},
+				Hostname:         "",
+				ServiceAccountId: "",
+				SchedulingPolicy: &compute.SchedulingPolicy{},
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := prepareInstanceCreateRequest(tt.args.d, tt.args.imageID)
+			require.Equal(t, tt.want, got)
 		})
 	}
 }
