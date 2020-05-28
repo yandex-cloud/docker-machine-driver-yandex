@@ -3,9 +3,9 @@ package main
 import (
 	"flag"
 	"fmt"
-	"os"
-
 	"github.com/docker/machine/libmachine/drivers/plugin"
+	"github.com/yandex-cloud/docker-machine-driver-yandex/driver"
+	"os"
 )
 
 // Version will be added once we start the build process
@@ -18,5 +18,5 @@ func main() {
 		fmt.Printf("Version: %s\n", Version)
 		os.Exit(0)
 	}
-	plugin.RegisterDriver(NewDriver())
+	plugin.RegisterDriver(driver.NewDriver())
 }
