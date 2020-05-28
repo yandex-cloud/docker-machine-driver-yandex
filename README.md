@@ -25,6 +25,7 @@ $ docker-machine create \
 |---------------------------------------------------------|---------------------------------------------------|--------------------------|
 | ``--yandex-cloud-id`` or ``$YC_CLOUD_ID``               | Cloud ID                                          |                          | 
 | ``--yandex-cores`` or ``$YC_CORES``                     | Count of virtual CPUs                             | 1                        | 
+| ``--yandex-core-faction`` or ``$YC_CORES``              | Core fraction                                     | 100                      | 
 | ``--yandex-disk-size`` or ``$YC_DISK_SIZE``             | Disk size in gigabytes                            | 20                       | 
 | ``--yandex-disk-type`` or ``$YC_DISK_TYPE``             | Disk type, e.g. 'network-hdd'                     | network-hdd              | 
 | ``--yandex-endpoint`` or ``$YC_ENDPOINT``               | Yandex.Cloud API Endpoint                         | api.cloud.yandex.net:443 | 
