@@ -1,4 +1,4 @@
-package main
+package driver
 
 import (
 	"context"
@@ -81,8 +81,9 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 		ZoneId:     d.Zone,
 		PlatformId: d.PlatformID,
 		ResourcesSpec: &compute.ResourcesSpec{
-			Cores:  int64(d.Cores),
-			Memory: toBytes(d.Memory),
+			Cores:        int64(d.Cores),
+			CoreFraction: int64(d.CoreFraction),
+			Memory:       toBytes(d.Memory),
 		},
 		BootDiskSpec: &compute.AttachedDiskSpec{
 			AutoDelete: true,

@@ -1,4 +1,4 @@
-package main
+package driver
 
 import (
 	"testing"
@@ -307,11 +307,11 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 					BaseDriver: &drivers.BaseDriver{
 						MachineName: "foobar-name",
 					},
-					Cores:    2,
-					DiskSize: 20,
-					DiskType: "network-hdd",
-					FolderID: "some-folder-id",
-					//Labels:                nil,
+					Cores:         2,
+					CoreFraction:  100,
+					DiskSize:      20,
+					DiskType:      "network-hdd",
+					FolderID:      "some-folder-id",
 					Memory:        2,
 					Nat:           false,
 					PlatformID:    "standard-v2",
@@ -331,9 +331,10 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 				ZoneId:      "ru-central1-c",
 				PlatformId:  "standard-v2",
 				ResourcesSpec: &compute.ResourcesSpec{
-					Memory: toBytes(2),
-					Cores:  2,
-					Gpus:   0,
+					Memory:       toBytes(2),
+					Cores:        2,
+					CoreFraction: 100,
+					Gpus:         0,
 				},
 				Metadata: map[string]string{"user-data": ""},
 				BootDiskSpec: &compute.AttachedDiskSpec{
@@ -369,11 +370,11 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 					BaseDriver: &drivers.BaseDriver{
 						MachineName: "foobar-name",
 					},
-					Cores:    2,
-					DiskSize: 20,
-					DiskType: "network-ssd",
-					FolderID: "some-folder-id",
-					//Labels:                nil,
+					Cores:         2,
+					CoreFraction:  50,
+					DiskSize:      20,
+					DiskType:      "network-ssd",
+					FolderID:      "some-folder-id",
 					Memory:        2,
 					Nat:           true,
 					PlatformID:    "standard-v2",
@@ -393,9 +394,10 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 				ZoneId:      "ru-central1-c",
 				PlatformId:  "standard-v2",
 				ResourcesSpec: &compute.ResourcesSpec{
-					Memory: toBytes(2),
-					Cores:  2,
-					Gpus:   0,
+					Memory:       toBytes(2),
+					Cores:        2,
+					CoreFraction: 50,
+					Gpus:         0,
 				},
 				Metadata: map[string]string{"user-data": "my custom userdata"},
 				BootDiskSpec: &compute.AttachedDiskSpec{

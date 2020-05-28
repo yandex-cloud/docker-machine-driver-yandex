@@ -1,4 +1,4 @@
-package main
+package driver
 
 import (
 	"bytes"
@@ -30,6 +30,7 @@ type Driver struct {
 
 	CloudID       string
 	Cores         int
+	CoreFraction  int
 	DiskSize      int
 	DiskType      string
 	FolderID      string
@@ -52,7 +53,8 @@ type Driver struct {
 }
 
 const (
-	defaultCores         = 1
+	defaultCores         = 2
+	defaultCoreFraction  = 100
 	defaultDiskSize      = 20
 	defaultDiskType      = "network-hdd"
 	defaultEndpoint      = "api.cloud.yandex.net:443"
@@ -97,6 +99,12 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Value:  defaultCores,
 		},
 		mcnflag.IntFlag{
+			EnvVar: "YC_CORES",
+			Name:   "yandex-core-faction",
+			Usage:  "Core fraction",
+			Value:  defaultCoreFraction,
+		},
+		mcnflag.IntFlag{
 			EnvVar: "YC_DISK_SIZE",
 			Name:   "yandex-disk-size",
 			Usage:  "Disk size in gigabytes",
@@ -122,19 +130,19 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.StringFlag{
 			EnvVar: "YC_IMAGE_FAMILY",
 			Name:   "yandex-image-family",
-			Usage:  "Yandex.Cloud Image family name to lookup image ID for instance",
+			Usage:  "Image family name to lookup image ID for instance",
 			Value:  defaultImageFamily,
 		},
 		mcnflag.StringFlag{
 			EnvVar: "YC_IMAGE_FOLDER_ID",
 			Name:   "yandex-image-folder-id",
-			Usage:  "Yandex.Cloud Folder ID to latest image by family name defined in `--yandex-image-family`",
+			Usage:  "Folder ID to the latest image by family name",
 			Value:  defaultImageFolderID,
 		},
 		mcnflag.StringFlag{
 			EnvVar: "YC_IMAGE_ID",
 			Name:   "yandex-image-id",
-			Usage:  "Yandex.Cloud Image identifier",
+			Usage:  "User-defined Image ID",
 			Value:  "",
 		},
 		mcnflag.StringSliceFlag{
@@ -151,12 +159,12 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.BoolFlag{
 			EnvVar: "YC_NAT",
 			Name:   "yandex-nat",
-			Usage:  "Assign external (NAT) IP address to a Compute Instance",
+			Usage:  "Assign external (NAT) IP address",
 		},
 		mcnflag.StringFlag{
 			EnvVar: "YC_PLATFORM_ID",
 			Name:   "yandex-platform-id",
-			Usage:  "ID of the hardware platform configuration for the instance",
+			Usage:  "ID of the hardware platform configuration",
 			Value:  defaultPlatformID,
 		},
 		mcnflag.BoolFlag{
@@ -194,7 +202,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.BoolFlag{
 			EnvVar: "YC_USE_INTERNAL_IP",
 			Name:   "yandex-use-internal-ip",
-			Usage:  "Use internal Instance IP rather than public one to communicate with machine",
+			Usage:  "Use the internal Instance IP to communicate",
 		},
 		mcnflag.StringFlag{
 			EnvVar: "YC_USERDATA",
@@ -225,6 +233,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	}
 
 	d.Cores = flags.Int("yandex-cores")
+	d.CoreFraction = flags.Int("yandex-core-faction")
 	d.DiskSize = flags.Int("yandex-disk-size")
 	d.DiskType = flags.String("yandex-disk-type")
 	d.Endpoint = flags.String("yandex-endpoint")
