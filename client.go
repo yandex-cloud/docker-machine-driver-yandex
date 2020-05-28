@@ -32,6 +32,49 @@ func (c *YCClient) createInstance(d *Driver) error {
 
 	log.Infof("Use image with ID %q from folder ID %q", imageID, d.ImageFolderID)
 
+	request := prepareInstanceCreateRequest(d, imageID)
+
+	op, err := c.sdk.WrapOperation(c.sdk.Compute().Instance().Create(ctx, request))
+	if err != nil {
+		return fmt.Errorf("Error while requesting API to create instance: %s", err)
+	}
+
+	protoMetadata, err := op.Metadata()
+	if err != nil {
+		return fmt.Errorf("Error while get instance create operation metadata: %s", err)
+	}
+
+	md, ok := protoMetadata.(*compute.CreateInstanceMetadata)
+	if !ok {
+		return fmt.Errorf("could not get Instance ID from create operation metadata")
+	}
+
+	d.InstanceID = md.InstanceId
+
+	log.Infof("Waiting for Instance with ID %q", d.InstanceID)
+	if err = op.Wait(ctx); err != nil {
+		return fmt.Errorf("Error while waiting operation to create instance: %s", err)
+	}
+
+	resp, err := op.Response()
+	if err != nil {
+		return fmt.Errorf("Instance creation failed: %s", err)
+	}
+
+	instance, ok := resp.(*compute.Instance)
+	if !ok {
+		return fmt.Errorf("Create response doesn't contain Instance")
+	}
+
+	d.IPAddress, err = c.getInstanceIPAddress(d, instance)
+
+	return err
+}
+
+func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInstanceRequest {
+	// TODO support static address assignment
+	// TODO additional disks
+
 	request := &compute.CreateInstanceRequest{
 		FolderId:   d.FolderID,
 		Name:       d.MachineName,
@@ -74,44 +117,7 @@ func (c *YCClient) createInstance(d *Driver) error {
 		}
 	}
 
-	// TODO support static address assignment
-	// TODO additional disks
-
-	op, err := c.sdk.WrapOperation(c.sdk.Compute().Instance().Create(ctx, request))
-	if err != nil {
-		return fmt.Errorf("Error while requesting API to create instance: %s", err)
-	}
-
-	protoMetadata, err := op.Metadata()
-	if err != nil {
-		return fmt.Errorf("Error while get instance create operation metadata: %s", err)
-	}
-
-	md, ok := protoMetadata.(*compute.CreateInstanceMetadata)
-	if !ok {
-		return fmt.Errorf("could not get Instance ID from create operation metadata")
-	}
-
-	d.InstanceID = md.InstanceId
-
-	log.Infof("Waiting for Instance with ID %q", d.InstanceID)
-	if err = op.Wait(ctx); err != nil {
-		return fmt.Errorf("Error while waiting operation to create instance: %s", err)
-	}
-
-	resp, err := op.Response()
-	if err != nil {
-		return fmt.Errorf("Instance creation failed: %s", err)
-	}
-
-	instance, ok := resp.(*compute.Instance)
-	if !ok {
-		return fmt.Errorf("Create response doesn't contain Instance")
-	}
-
-	d.IPAddress, err = c.getInstanceIPAddress(d, instance)
-
-	return err
+	return request
 }
 
 func NewYCClient(d *Driver) (*YCClient, error) {
