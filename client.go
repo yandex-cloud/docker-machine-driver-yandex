@@ -32,48 +32,7 @@ func (c *YCClient) createInstance(d *Driver) error {
 
 	log.Infof("Use image with ID %q from folder ID %q", imageID, d.ImageFolderID)
 
-	request := &compute.CreateInstanceRequest{
-		FolderId:   d.FolderID,
-		Name:       d.MachineName,
-		ZoneId:     d.Zone,
-		PlatformId: d.PlatformID,
-		ResourcesSpec: &compute.ResourcesSpec{
-			Cores:  int64(d.Cores),
-			Memory: toBytes(d.Memory),
-		},
-		BootDiskSpec: &compute.AttachedDiskSpec{
-			AutoDelete: true,
-			Disk: &compute.AttachedDiskSpec_DiskSpec_{
-				DiskSpec: &compute.AttachedDiskSpec_DiskSpec{
-					TypeId: d.DiskType,
-					Size:   toBytes(d.DiskSize),
-					Source: &compute.AttachedDiskSpec_DiskSpec_ImageId{
-						ImageId: imageID,
-					},
-				},
-			},
-		},
-		Labels: d.ParsedLabels(),
-		NetworkInterfaceSpecs: []*compute.NetworkInterfaceSpec{
-			{
-				SubnetId: d.SubnetID,
-				PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{
-					OneToOneNatSpec: &compute.OneToOneNatSpec{
-						IpVersion: compute.IpVersion_IPV4,
-					},
-				},
-			},
-		},
-		SchedulingPolicy: &compute.SchedulingPolicy{
-			Preemptible: d.Preemptible,
-		},
-		Metadata: map[string]string{
-			"user-data": d.UserData,
-		},
-	}
-
-	// TODO support static address assignment
-	// TODO additional disks
+	request := prepareInstanceCreateRequest(d, imageID)
 
 	op, err := c.sdk.WrapOperation(c.sdk.Compute().Instance().Create(ctx, request))
 	if err != nil {
@@ -110,6 +69,55 @@ func (c *YCClient) createInstance(d *Driver) error {
 	d.IPAddress, err = c.getInstanceIPAddress(d, instance)
 
 	return err
+}
+
+func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInstanceRequest {
+	// TODO support static address assignment
+	// TODO additional disks
+
+	request := &compute.CreateInstanceRequest{
+		FolderId:   d.FolderID,
+		Name:       d.MachineName,
+		ZoneId:     d.Zone,
+		PlatformId: d.PlatformID,
+		ResourcesSpec: &compute.ResourcesSpec{
+			Cores:  int64(d.Cores),
+			Memory: toBytes(d.Memory),
+		},
+		BootDiskSpec: &compute.AttachedDiskSpec{
+			AutoDelete: true,
+			Disk: &compute.AttachedDiskSpec_DiskSpec_{
+				DiskSpec: &compute.AttachedDiskSpec_DiskSpec{
+					TypeId: d.DiskType,
+					Size:   toBytes(d.DiskSize),
+					Source: &compute.AttachedDiskSpec_DiskSpec_ImageId{
+						ImageId: imageID,
+					},
+				},
+			},
+		},
+		Labels: d.ParsedLabels(),
+		NetworkInterfaceSpecs: []*compute.NetworkInterfaceSpec{
+			{
+				SubnetId:             d.SubnetID,
+				PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{},
+			},
+		},
+		SchedulingPolicy: &compute.SchedulingPolicy{
+			Preemptible: d.Preemptible,
+		},
+		Metadata: map[string]string{
+			"user-data": d.UserData,
+		},
+	}
+
+	if d.Nat {
+		request.NetworkInterfaceSpecs[0].PrimaryV4AddressSpec.OneToOneNatSpec = &compute.OneToOneNatSpec{
+			IpVersion: compute.IpVersion_IPV4,
+		}
+	}
+
+	return request
 }
 
 func NewYCClient(d *Driver) (*YCClient, error) {

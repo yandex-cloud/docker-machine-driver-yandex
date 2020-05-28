@@ -15,6 +15,7 @@ require (
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/sirupsen/logrus v1.4.2 // indirect
+	github.com/stretchr/testify v1.2.2
 	github.com/yandex-cloud/go-genproto v0.0.0-20200316083924-bd7a668b4f7b
 	github.com/yandex-cloud/go-sdk v0.0.0-20200306133551-1e4c0ef0a537
 	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4 // indirect
