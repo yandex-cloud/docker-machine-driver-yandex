@@ -12,7 +12,7 @@ func main() {
 		cmdFlag := fmt.Sprintf("--%s", f.String())
 		defValue := f.Default()
 
-		defValue, envVar, desc := "", "", ""
+		envVar, desc := "", ""
 		switch v := f.(type) {
 		case mcnflag.StringFlag:
 			envVar = v.EnvVar
