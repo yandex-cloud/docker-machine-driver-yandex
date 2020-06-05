@@ -336,7 +336,6 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 					CoreFraction: 100,
 					Gpus:         0,
 				},
-				Metadata: map[string]string{"user-data": ""},
 				BootDiskSpec: &compute.AttachedDiskSpec{
 					AutoDelete: true,
 					Disk: &compute.AttachedDiskSpec_DiskSpec_{
@@ -382,7 +381,6 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 					SubnetID:      "foobar-subnet",
 					UseInternalIP: true,
 					Zone:          "ru-central1-c",
-					UserData:      "my custom userdata",
 				},
 				imageID: "foobar-image-id",
 			},
@@ -399,7 +397,6 @@ func Test_prepareInstanceCreateRequest(t *testing.T) {
 					CoreFraction: 50,
 					Gpus:         0,
 				},
-				Metadata: map[string]string{"user-data": "my custom userdata"},
 				BootDiskSpec: &compute.AttachedDiskSpec{
 					AutoDelete: true,
 					Disk: &compute.AttachedDiskSpec_DiskSpec_{

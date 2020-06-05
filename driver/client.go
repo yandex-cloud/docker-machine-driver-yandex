@@ -107,9 +107,7 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 		SchedulingPolicy: &compute.SchedulingPolicy{
 			Preemptible: d.Preemptible,
 		},
-		Metadata: map[string]string{
-			"user-data": d.UserData,
-		},
+		Metadata: d.Metadata,
 	}
 
 	if d.Nat {
