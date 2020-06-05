@@ -1,7 +1,6 @@
 package driver
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -9,7 +8,6 @@ import (
 	"net"
 	"os"
 	"strings"
-	"text/template"
 
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/log"
@@ -585,32 +583,3 @@ func (d *Driver) prepareUserData() (string, error) {
 	}
 	return "", nil
 }
-
-func defaultUserData(sshUserName, sshPublicKey string) (string, error) {
-	type templateData struct {
-		SSHUserName  string
-		SSHPublicKey string
-	}
-	buf := &bytes.Buffer{}
-	err := defaultUserDataTemplate.Execute(buf, templateData{
-		SSHUserName:  sshUserName,
-		SSHPublicKey: sshPublicKey,
-	})
-	if err != nil {
-		return "", fmt.Errorf("error while process template: %s", err)
-	}
-
-	return buf.String(), nil
-}
-
-var defaultUserDataTemplate = template.Must(
-	template.New("user-data").Parse(`#cloud-config
-ssh_pwauth: no
-
-users:
-  - name: {{.SSHUserName}}
-    sudo: ALL=(ALL) NOPASSWD:ALL
-    shell: /bin/bash
-    ssh_authorized_keys:
-      - {{.SSHPublicKey}}
-`))
