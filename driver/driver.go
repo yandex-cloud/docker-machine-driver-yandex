@@ -562,7 +562,7 @@ func (d *Driver) prepareInstanceMetadata(publicKey string) error {
 	d.Metadata[sshMetaDataKey] = sshMetaDataValue
 
 	// form 'user-data' metadata key
-	userData, err := d.prepareUserData()
+	userData, err := d.prepareUserData(publicKey)
 	if err != nil {
 		return err
 	}
@@ -574,16 +574,22 @@ func (d *Driver) prepareInstanceMetadata(publicKey string) error {
 	return nil
 }
 
-func (d *Driver) prepareUserData() (string, error) {
+func (d *Driver) prepareUserData(publicKey string) (string, error) {
+	userData, err := defaultUserData(d.GetSSHUsername(), publicKey)
+	if err != nil {
+		return "", err
+	}
+
 	if d.UserDataFile != "" {
 		log.Infof("Use provided file %q with user-data", d.UserDataFile)
 		buf, err := ioutil.ReadFile(d.UserDataFile)
 		if err != nil {
 			return "", err
 		}
-		return string(buf), nil
+		userData, err = combineTwoCloudConfigs(userData, string(buf))
 	}
-	return "", nil
+
+	return userData, nil
 }
 
 func defaultUserData(sshUserName, sshPublicKey string) (string, error) {
