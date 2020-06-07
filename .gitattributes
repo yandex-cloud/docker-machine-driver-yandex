@@ -1,0 +1,2 @@
+driver/testdata/user-data_from_file.golden text eol=crlf
+driver/testdata/no_user-data_input.golden  text eol=lf
