@@ -40,6 +40,7 @@ type Driver struct {
 	InstanceID    string
 	Labels        []string
 	Memory        int
+	Metadata      map[string]string
 	Nat           bool
 	PlatformID    string
 	Preemptible   bool
@@ -48,7 +49,6 @@ type Driver struct {
 	UseIPv6       bool
 	UseInternalIP bool
 	UserDataFile  string
-	UserData      string
 	Zone          string
 }
 
@@ -63,7 +63,7 @@ const (
 	defaultMemory        = 1
 	defaultPlatformID    = "standard-v1"
 	defaultSSHPort       = 22
-	defaultSSHUser       = "yc-user"
+	defaultSSHUser       = "ubuntu"
 	defaultZone          = "ru-central1-a"
 )
 
@@ -76,6 +76,7 @@ func NewDriver() drivers.Driver {
 		ImageFolderID: defaultImageFolderID,
 		ImageFamily:   defaultImageFamily,
 		Memory:        defaultMemory,
+		Metadata:      map[string]string{},
 		PlatformID:    defaultPlatformID,
 		Zone:          defaultZone,
 	}
@@ -283,7 +284,7 @@ func (d *Driver) PreCreateCheck() error {
 			return err
 		}
 	}
-	log.Infof("Check that folder exists")
+	log.Infof("Check folder exists")
 	folder, err := c.sdk.ResourceManager().Folder().Get(context.Background(), &resourcemanager.GetFolderRequest{
 		FolderId: d.FolderID,
 	})
@@ -300,7 +301,7 @@ func (d *Driver) PreCreateCheck() error {
 		return fmt.Errorf("Fail to get instance list in Folder: %s", err)
 	}
 	if len(resp.Instances) > 0 {
-		return fmt.Errorf("instance %q already exists in folder %q", d.MachineName, d.FolderID)
+		return fmt.Errorf("instance with name %q already exists in folder %q", d.MachineName, d.FolderID)
 	}
 
 	if d.SubnetID == "" {
@@ -317,11 +318,21 @@ func (d *Driver) PreCreateCheck() error {
 
 // Create creates a Yandex.Cloud VM instance acting as a docker host.
 func (d *Driver) Create() error {
-	log.Infof("Prepare instance user-data")
-	if err := d.prepareUserData(); err != nil {
+	log.Infof("Generating SSH Key")
+	if err := ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
 		return err
 	}
-	log.Debugf("Formed user-data:\n%s\n", d.UserData)
+
+	publicKey, err := ioutil.ReadFile(d.publicSSHKeyPath())
+	if err != nil {
+		return err
+	}
+
+	log.Infof("Prepare an instance metadata (user-data included)")
+	if err := d.prepareInstanceMetadata(string(publicKey)); err != nil {
+		return err
+	}
+	log.Debugf("Formed user-data:\n%s\n", d.Metadata["user-data"])
 
 	log.Infof("Creating instance...")
 	c, err := d.buildClient()
@@ -543,30 +554,45 @@ func (d *Driver) publicSSHKeyPath() string {
 	return d.GetSSHKeyPath() + ".pub"
 }
 
-func (d *Driver) prepareUserData() error {
-	if d.UserDataFile != "" {
-		log.Infof("Use provided file %q with user-data", d.UserDataFile)
-		buf, err := ioutil.ReadFile(d.UserDataFile)
-		if err != nil {
-			return err
-		}
-		d.UserData = string(buf)
-		return nil
-	}
+func (d *Driver) prepareInstanceMetadata(publicKey string) error {
+	// form 'ssh-keys' metadata key
+	sshMetaDataKey := "ssh-keys"
+	sshMetaDataValue := fmt.Sprintf("%s:%s", d.GetSSHUsername(), publicKey)
 
-	log.Infof("Generating SSH Key")
-	if err := ssh.GenerateSSHKey(d.GetSSHKeyPath()); err != nil {
-		return err
-	}
+	d.Metadata[sshMetaDataKey] = sshMetaDataValue
 
-	publicKey, err := ioutil.ReadFile(d.publicSSHKeyPath())
+	// form 'user-data' metadata key
+	userData, err := d.prepareUserData(publicKey)
 	if err != nil {
 		return err
 	}
 
-	d.UserData, err = defaultUserData(d.GetSSHUsername(), string(publicKey))
+	if userData != "" {
+		d.Metadata["user-data"] = userData
+	}
 
-	return err
+	return nil
+}
+
+func (d *Driver) prepareUserData(publicKey string) (string, error) {
+	userData, err := defaultUserData(d.GetSSHUsername(), publicKey)
+	if err != nil {
+		return "", err
+	}
+
+	if d.UserDataFile != "" {
+		log.Infof("Use provided file %q with user-data", d.UserDataFile)
+		buf, err := ioutil.ReadFile(d.UserDataFile)
+		if err != nil {
+			return "", err
+		}
+		userData, err = combineTwoCloudConfigs(userData, string(buf))
+		if err != nil {
+			return "", err
+		}
+	}
+
+	return userData, nil
 }
 
 func defaultUserData(sshUserName, sshPublicKey string) (string, error) {

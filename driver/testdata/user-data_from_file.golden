@@ -1,0 +1,23 @@
+Content-Type: multipart/mixed; boundary="DOCKERMACHINEMIMEBOUNDARY"
+MIME-Version: 1.0
+
+--DOCKERMACHINEMIMEBOUNDARY
+Content-Disposition: attachment; filename="custom-user-data.yaml"
+Content-Type: text/cloud-config
+
+#cloud-config
+ssh_pwauth: no
+
+users:
+  - name: debian
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkai1XE7djYB5Z
+
+--DOCKERMACHINEMIMEBOUNDARY
+Content-Disposition: attachment; filename="docker-machine-yandex-driver.yaml"
+Content-Type: text/cloud-config
+
+My Custom User-Data
+--DOCKERMACHINEMIMEBOUNDARY--

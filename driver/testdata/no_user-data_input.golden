@@ -1,0 +1,9 @@
+#cloud-config
+ssh_pwauth: no
+
+users:
+  - name: ubuntu
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    shell: /bin/bash
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkai1XE7djYB5Z
