@@ -43,7 +43,7 @@ func TestNewYandexCloudClient(t *testing.T) {
 			args: args{
 				d: &Driver{
 					Token:                 "some-test-token",
-					ServiceAccountKeyFile: "test-fixtures/fake_service_account_key.json",
+					ServiceAccountKeyFile: "testdata/fake_service_account_key.json",
 				},
 			},
 			wantErr: true,
@@ -53,7 +53,7 @@ func TestNewYandexCloudClient(t *testing.T) {
 			args: args{
 				d: &Driver{
 					Token:                 "",
-					ServiceAccountKeyFile: "test-fixtures/fake_service_account_key.json",
+					ServiceAccountKeyFile: "testdata/fake_service_account_key.json",
 				},
 			},
 			wantErr: false,

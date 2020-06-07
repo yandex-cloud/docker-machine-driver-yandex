@@ -587,6 +587,9 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 			return "", err
 		}
 		userData, err = combineTwoCloudConfigs(userData, string(buf))
+		if err != nil {
+			return "", err
+		}
 	}
 
 	return userData, nil

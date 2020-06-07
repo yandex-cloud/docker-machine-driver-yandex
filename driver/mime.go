@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const dockerMachineMIMEBoundary = `DOCKERMACHINEMIMEBOUNDARY`
+
 var quoteEscaper = strings.NewReplacer("\\", "\\\\", `"`, "\\\"")
 
 func escapeQuotes(s string) string {
@@ -18,6 +20,10 @@ func escapeQuotes(s string) string {
 func combineTwoCloudConfigs(userInput, dockerMachineInput string) (string, error) {
 	var buffer bytes.Buffer
 	w := multipart.NewWriter(&buffer)
+	err := w.SetBoundary(dockerMachineMIMEBoundary)
+	if err != nil {
+		return "", err
+	}
 
 	// add specialized mime headers to be correct processed by cloudinit/handlers/__init__.py
 	addMixedHeader(&buffer, w.Boundary())
@@ -26,23 +32,33 @@ func combineTwoCloudConfigs(userInput, dockerMachineInput string) (string, error
 	if err != nil {
 		return "", err
 	}
-	wp.Write([]byte(userInput))
+	_, err = wp.Write(convertCRtoCRLF(userInput))
+	if err != nil {
+		return "", err
+	}
 
 	wp, err = w.CreatePart(createMimeHeader("docker-machine-yandex-driver.yaml", ""))
 	if err != nil {
 		return "", err
 	}
-	wp.Write([]byte(dockerMachineInput))
+	_, err = wp.Write(convertCRtoCRLF(dockerMachineInput))
+	if err != nil {
+		return "", err
+	}
 
 	w.Close()
 
 	return buffer.String(), nil
 }
 
+func convertCRtoCRLF(s string) []byte {
+	return []byte(strings.Replace(s, "\n", "\r\n", -1))
+}
+
+//nolint:errcheck
 func addMixedHeader(writer io.Writer, boundary string) {
-	writer.Write([]byte(fmt.Sprintf("Content-Type: multipart/mixed; boundary=\"%s\"\n", boundary)))
+	writer.Write([]byte(fmt.Sprintf("Content-Type: multipart/mixed; boundary=\"%s\"\r\n", boundary)))
 	writer.Write([]byte("MIME-Version: 1.0\r\n\r\n"))
-	return
 }
 
 // CreateFormFile is a convenience wrapper around CreatePart. It creates
