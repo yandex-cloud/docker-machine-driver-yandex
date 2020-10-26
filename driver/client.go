@@ -7,12 +7,21 @@ import (
 
 	"github.com/c2h5oh/datasize"
 	"github.com/docker/machine/libmachine/log"
+	"github.com/google/uuid"
+	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
 	"github.com/yandex-cloud/go-sdk/iamkey"
+	"github.com/yandex-cloud/go-sdk/pkg/requestid"
+	"github.com/yandex-cloud/go-sdk/pkg/retry"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/metadata"
 )
 
+const MaxRetries = 3
 const StandardImagesFolderID = "standard-images"
+const UserAgent = "docker-machine-driver-yandex"
 
 type YCClient struct {
 	sdk *ycsdk.SDK
@@ -148,7 +157,27 @@ func NewYCClient(d *Driver) (*YCClient, error) {
 		config.Endpoint = d.Endpoint
 	}
 
-	sdk, err := ycsdk.Build(context.Background(), config)
+	headerMD := metadata.Pairs("user-agent", UserAgent)
+
+	requestIDInterceptor := requestid.Interceptor()
+
+	retryInterceptor := retry.Interceptor(
+		retry.WithMax(MaxRetries),
+		retry.WithCodes(codes.Unavailable),
+		retry.WithAttemptHeader(true),
+		retry.WithBackoff(retry.DefaultBackoff()),
+	)
+
+	// Make sure retry interceptor is above id interceptor.
+	// Now we will have new request id for every retry attempt.
+	interceptorChain := grpc_middleware.ChainUnaryClient(retryInterceptor, requestIDInterceptor)
+
+	ctxWithClientTraceID := requestid.ContextWithClientTraceID(context.Background(), uuid.New().String())
+	sdk, err := ycsdk.Build(ctxWithClientTraceID, config,
+		grpc.WithUserAgent(UserAgent),
+		grpc.WithDefaultCallOptions(grpc.Header(&headerMD)),
+		grpc.WithUnaryInterceptor(interceptorChain))
+
 	if err != nil {
 		return nil, err
 	}
