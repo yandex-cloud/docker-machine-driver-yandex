@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/c2h5oh/datasize"
 	"github.com/docker/machine/libmachine/log"
@@ -136,7 +137,11 @@ func NewYCClient(d *Driver) (*YCClient, error) {
 	var credentials ycsdk.Credentials
 	switch {
 	case d.Token != "":
-		credentials = ycsdk.OAuthToken(d.Token)
+		if strings.HasPrefix(d.Token, "t1.") && strings.Count(d.Token, ".") == 2 {
+			credentials = ycsdk.NewIAMTokenCredentials(d.Token)
+		} else {
+			credentials = ycsdk.OAuthToken(d.Token)
+		}
 	case d.ServiceAccountKeyFile != "":
 		key, err := iamkey.ReadFromJSONFile(d.ServiceAccountKeyFile)
 		if err != nil {
