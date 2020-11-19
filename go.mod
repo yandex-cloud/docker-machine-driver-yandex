@@ -9,17 +9,17 @@ require (
 	github.com/docker/docker v1.13.1 // indirect
 	github.com/docker/machine v0.16.2
 	github.com/ghodss/yaml v1.0.0 // indirect
-	github.com/golang/protobuf v1.3.5 // indirect
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
 	github.com/hashicorp/go-multierror v1.0.0 // indirect
 	github.com/konsorten/go-windows-terminal-sequences v1.0.2 // indirect
 	github.com/mitchellh/go-testing-interface v1.0.0 // indirect
-	github.com/stretchr/testify v1.4.0
-	github.com/yandex-cloud/go-genproto v0.0.0-20200316083924-bd7a668b4f7b
-	github.com/yandex-cloud/go-sdk v0.0.0-20200306133551-1e4c0ef0a537
+	github.com/stretchr/testify v1.5.1
+	github.com/yandex-cloud/go-genproto v0.0.0-20201102102956-0c505728b6f0
+	github.com/yandex-cloud/go-sdk v0.0.0-20201109103511-a86298d3fea5
 	golang.org/x/crypto v0.0.0-20200311171314-f7b00557c8c4 // indirect
 	google.golang.org/grpc v1.29.1
+	google.golang.org/protobuf v1.25.0 // indirect
 	gopkg.in/yaml.v2 v2.2.8 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )
