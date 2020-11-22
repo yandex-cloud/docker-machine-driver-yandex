@@ -100,8 +100,8 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Value:  defaultCores,
 		},
 		mcnflag.IntFlag{
-			EnvVar: "YC_CORES",
-			Name:   "yandex-core-faction",
+			EnvVar: "YC_CORE_FRACTION",
+			Name:   "yandex-core-fraction",
 			Usage:  "Core fraction",
 			Value:  defaultCoreFraction,
 		},
@@ -234,7 +234,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	}
 
 	d.Cores = flags.Int("yandex-cores")
-	d.CoreFraction = flags.Int("yandex-core-faction")
+	d.CoreFraction = flags.Int("yandex-core-fraction")
 	d.DiskSize = flags.Int("yandex-disk-size")
 	d.DiskType = flags.String("yandex-disk-type")
 	d.Endpoint = flags.String("yandex-endpoint")
