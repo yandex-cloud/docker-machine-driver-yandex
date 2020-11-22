@@ -340,7 +340,13 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	return c.createInstance(d)
+	if err := c.createInstance(d); err != nil {
+		// cleanup partially created instance
+		_ = d.Remove()
+		return err
+	}
+
+	return nil
 }
 
 // GetSSHHostname returns hostname for use with ssh
