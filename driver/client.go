@@ -121,8 +121,15 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 	}
 
 	if d.Nat {
-		request.NetworkInterfaceSpecs[0].PrimaryV4AddressSpec.OneToOneNatSpec = &compute.OneToOneNatSpec{
-			IpVersion: compute.IpVersion_IPV4,
+		if d.StaticAddress == "" {
+			request.NetworkInterfaceSpecs[0].PrimaryV4AddressSpec.OneToOneNatSpec = &compute.OneToOneNatSpec{
+				IpVersion: compute.IpVersion_IPV4,
+			}
+		} else {
+			request.NetworkInterfaceSpecs[0].PrimaryV4AddressSpec.OneToOneNatSpec = &compute.OneToOneNatSpec{
+				Address:   d.StaticAddress,
+				IpVersion: compute.IpVersion_IPV4,
+			}
 		}
 	}
 
