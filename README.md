@@ -46,4 +46,5 @@ $ docker-machine create \
 | ``--yandex-use-internal-ip`` or ``$YC_USE_INTERNAL_IP`` | Use the internal Instance IP to communicate       | false                    |
 | ``--yandex-userdata`` or ``$YC_USERDATA``               | Path to file with cloud-init user-data            |                          |
 | ``--yandex-zone`` or ``$YC_ZONE``                       | Yandex.Cloud zone                                 | ru-central1-a            |
+| ``--yandex-static-address`` or ``$YC_STATIC_ADDRESS``   | Set static address                                |                          |
 ---
