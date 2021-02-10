@@ -50,6 +50,7 @@ type Driver struct {
 	UseInternalIP bool
 	UserDataFile  string
 	Zone          string
+	StaticAddress string
 }
 
 const (
@@ -216,6 +217,12 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "Yandex.Cloud zone",
 			Value:  defaultZone,
 		},
+		mcnflag.StringFlag{
+			EnvVar: "YC_STATIC_ADDRESS",
+			Name:   "yandex-static-address",
+			Usage:  "Set static address",
+			Value:  "",
+		},
 	}
 }
 
@@ -252,6 +259,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.UseInternalIP = flags.Bool("yandex-use-internal-ip")
 	d.UserDataFile = flags.String("yandex-userdata")
 	d.Zone = flags.String("yandex-zone")
+	d.StaticAddress = flags.String("yandex-static-address")
 
 	return nil
 }
