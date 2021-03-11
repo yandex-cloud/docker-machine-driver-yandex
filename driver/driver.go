@@ -28,29 +28,30 @@ type Driver struct {
 	ServiceAccountKeyFile string
 	Token                 string
 
-	CloudID       string
-	Cores         int
-	CoreFraction  int
-	DiskSize      int
-	DiskType      string
-	FolderID      string
-	ImageFamily   string
-	ImageFolderID string
-	ImageID       string
-	InstanceID    string
-	Labels        []string
-	Memory        int
-	Metadata      map[string]string
-	Nat           bool
-	PlatformID    string
-	Preemptible   bool
-	SSHUser       string
-	SubnetID      string
-	UseIPv6       bool
-	UseInternalIP bool
-	UserDataFile  string
-	Zone          string
-	StaticAddress string
+	CloudID        string
+	Cores          int
+	CoreFraction   int
+	DiskSize       int
+	DiskType       string
+	FolderID       string
+	ImageFamily    string
+	ImageFolderID  string
+	ImageID        string
+	InstanceID     string
+	Labels         []string
+	Memory         int
+	Metadata       map[string]string
+	Nat            bool
+	PlatformID     string
+	Preemptible    bool
+	SSHUser        string
+	SubnetID       string
+	UseIPv6        bool
+	UseInternalIP  bool
+	UserDataFile   string
+	Zone           string
+	StaticAddress  string
+	SecurityGroups []string
 }
 
 const (
@@ -223,6 +224,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Usage:  "Set static address",
 			Value:  "",
 		},
+		mcnflag.StringSliceFlag{
+			EnvVar: "YC_SECURITY_GROUPS",
+			Name:   "yandex-security-groups",
+			Usage:  "Set security groups",
+		},
 	}
 }
 
@@ -260,6 +266,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.UserDataFile = flags.String("yandex-userdata")
 	d.Zone = flags.String("yandex-zone")
 	d.StaticAddress = flags.String("yandex-static-address")
+	d.SecurityGroups = flags.StringSlice("yandex-security-groups")
 
 	return nil
 }
