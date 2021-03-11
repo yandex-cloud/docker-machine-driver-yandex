@@ -39,12 +39,13 @@ $ docker-machine create \
 | ``--yandex-platform-id`` or ``$YC_PLATFORM_ID``         | ID of the hardware platform configuration         | standard-v1              |
 | ``--yandex-preemptible`` or ``$YC_PREEMPTIBLE``         | Yandex.Cloud Instance preemptibility flag         | false                    |
 | ``--yandex-sa-key-file`` or ``$YC_SA_KEY_FILE``         | Yandex.Cloud Service Account key file             |                          |
+| ``--yandex-security-groups`` or ``$YC_SECURITY_GROUPS`` | Set security groups                               |                          |
 | ``--yandex-ssh-port`` or ``$YC_SSH_PORT``               | SSH port                                          | 22                       |
 | ``--yandex-ssh-user`` or ``$YC_SSH_USER``               | SSH username                                      | yc-user                  |
+| ``--yandex-static-address`` or ``$YC_STATIC_ADDRESS``   | Set public static IPv4 address                    |                          |
 | ``--yandex-subnet-id`` or ``$YC_SUBNET_ID``             | Subnet ID                                         |                          |
 | ``--yandex-token`` or ``$YC_TOKEN``                     | Yandex.Cloud OAuth token or IAM token             |                          |
 | ``--yandex-use-internal-ip`` or ``$YC_USE_INTERNAL_IP`` | Use the internal Instance IP to communicate       | false                    |
 | ``--yandex-userdata`` or ``$YC_USERDATA``               | Path to file with cloud-init user-data            |                          |
 | ``--yandex-zone`` or ``$YC_ZONE``                       | Yandex.Cloud zone                                 | ru-central1-a            |
-| ``--yandex-static-address`` or ``$YC_STATIC_ADDRESS``   | Set public static IPv4 address                                |                          |
 ---

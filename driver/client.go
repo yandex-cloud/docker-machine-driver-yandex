@@ -112,6 +112,7 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 			{
 				SubnetId:             d.SubnetID,
 				PrimaryV4AddressSpec: &compute.PrimaryAddressSpec{},
+				SecurityGroupIds:     d.SecurityGroups,
 			},
 		},
 		SchedulingPolicy: &compute.SchedulingPolicy{
