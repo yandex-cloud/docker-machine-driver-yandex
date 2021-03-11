@@ -1,0 +1,48 @@
+name: build
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    -
+      uses: actions/checkout@v2
+
+    -
+      name: Set up Go
+      uses: actions/setup-go@v2
+      with:
+        go-version: 1.15
+
+    -
+      name: Build
+      run: go build -v ./...
+
+    -
+      name: GoReleaser Check
+      uses: goreleaser/goreleaser-action@v2
+      with:
+        version: latest
+        args: check
+
+    -
+      name: Diff
+      run: git diff
+
+    -
+      name: GoReleaser
+      uses: goreleaser/goreleaser-action@v2
+      if: success()
+      env:
+        GITHUB_TOKEN: ${{ secrets.GH_PAT }}
+      run: |
+        if [[ $GITHUB_REF == refs/tags/v* ]]; then
+          ./goreleaser
+        elif [[ $GITHUB_REF == refs/heads/master ]]; then
+          ./goreleaser --snapshot
+        fi
