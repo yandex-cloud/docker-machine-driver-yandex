@@ -4,3 +4,4 @@
 
 # do not include vendor dir
 vendor/
+dist/
