@@ -17,4 +17,4 @@ require (
 
 replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20200309214505-aa6a9891b09c
 
-//replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.4.1
+replace github.com/Sirupsen/logrus v1.8.1 => github.com/sirupsen/logrus v1.4.1
