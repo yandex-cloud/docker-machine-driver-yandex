@@ -5,7 +5,7 @@ go 1.16
 require (
 	github.com/Azure/go-ansiterm v0.0.0-20170929234023-d6e3b3328b78 // indirect
 	github.com/c2h5oh/datasize v0.0.0-20200112174442-28bbd4740fee
-	github.com/docker/docker v1.13.1 // indirect
+	github.com/docker/docker v17.12.0-ce-rc1.0.20190115220918-5ec31380a5d3+incompatible // indirect
 	github.com/docker/machine v0.16.2
 	github.com/google/uuid v1.1.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.2
@@ -18,7 +18,3 @@ require (
 	google.golang.org/protobuf v1.25.0 // indirect
 	gotest.tools v2.2.0+incompatible // indirect
 )
-
-replace github.com/docker/docker => github.com/docker/engine v1.4.2-0.20200309214505-aa6a9891b09c
-
-replace github.com/Sirupsen/logrus => github.com/sirupsen/logrus v1.4.1
