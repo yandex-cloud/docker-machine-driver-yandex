@@ -1,4 +1,4 @@
-module github.com/yandex-cloud/docker-machine-driver-yandex
+module github.com/GennadySpb/docker-machine-driver-yandex
 
 go 1.16
 
