@@ -1,51 +1,91 @@
 # Yandex.Cloud Docker machine driver
+## Overview
+
+![Test](https://github.com/yandex-cloud/docker-machine-driver-yandex/actions/workflows/test.yml/badge.svg)
+
+A 3rd-party driver plugin for Docker machine to manage your containers on the servers of Yandex.Cloud
 
 ## Installation
-### Go
+### From a Release
+
+The latest version of the `docker-machine-driver-yandex` binary is available on the
+[GithHub Releases](https://github.com/yandex-cloud/docker-machine-driver-yandex/releases) page.
+Download the the binary that corresponds to your OS into a directory residing in your PATH.
+
+### From Source
+
+Make sure you have installed [Go](http://www.golang.org) and configured [GOPATH](http://golang.org/doc/code.html#GOPATH)
+properly. For MacOS and Linux, make sure `$GOPATH/bin` is part of your `$PATH` for MacOS and Linux.
+For Windows, make sure `%GOPATH%\bin` is included in `%PATH%`.
+
+Run the following command:
 ```shell
-# install latest (git) version of docker-machine-driver-yandex in your $GOPATH/bin (depends on Golang and docker-machine)
 $ go get -u github.com/yandex-cloud/docker-machine-driver-yandex
 ```
-
-### Binary
-
-WIP
 
 ## Usage
 ```bash
 $ docker-machine create \
   --driver yandex \
-  --yandex-token=FRegxx408323539fsdgHhsakawe0 \
-  some-machine
+  --yandex-token=<your_iam_token_here> \
+  default
 ```
 
 ## Options
 
-|Option Name                                              |Description                                        |Default Value             |
-|---------------------------------------------------------|---------------------------------------------------|--------------------------|
-| ``--yandex-cloud-id`` or ``$YC_CLOUD_ID``               | Cloud ID                                          |                          |
-| ``--yandex-cores`` or ``$YC_CORES``                     | Count of virtual CPUs                             | 2                        |
-| ``--yandex-core-fraction`` or ``$YC_CORE_FRACTION``     | Core fraction                                     | 100                      |
-| ``--yandex-disk-size`` or ``$YC_DISK_SIZE``             | Disk size in gigabytes                            | 20                       |
-| ``--yandex-disk-type`` or ``$YC_DISK_TYPE``             | Disk type, e.g. 'network-hdd'                     | network-hdd              |
-| ``--yandex-endpoint`` or ``$YC_ENDPOINT``               | Yandex.Cloud API Endpoint                         | api.cloud.yandex.net:443 |
-| ``--yandex-folder-id`` or ``$YC_FOLDER_ID``             | Folder ID                                         |                          |
-| ``--yandex-image-family`` or ``$YC_IMAGE_FAMILY``       | Image family name to lookup image ID for instance | ubuntu-1604-lts          |
-| ``--yandex-image-folder-id`` or ``$YC_IMAGE_FOLDER_ID`` | Folder ID to the latest image by family name      | standard-images          |
-| ``--yandex-image-id`` or ``$YC_IMAGE_ID``               | User-defined Image ID                             |                          |
-| ``--yandex-labels`` or ``$YC_LABELS``                   | Instance labels in 'key=value' format             |                          |
-| ``--yandex-memory`` or ``$YC_MEMORY``                   | Memory in gigabytes                               | 1                        |
-| ``--yandex-nat`` or ``$YC_NAT``                         | Assign external (NAT) IP address                  | false                    |
-| ``--yandex-platform-id`` or ``$YC_PLATFORM_ID``         | ID of the hardware platform configuration         | standard-v1              |
-| ``--yandex-preemptible`` or ``$YC_PREEMPTIBLE``         | Yandex.Cloud Instance preemptibility flag         | false                    |
-| ``--yandex-sa-key-file`` or ``$YC_SA_KEY_FILE``         | Yandex.Cloud Service Account key file             |                          |
-| ``--yandex-security-groups`` or ``$YC_SECURITY_GROUPS`` | Set security groups                               |                          |
-| ``--yandex-ssh-port`` or ``$YC_SSH_PORT``               | SSH port                                          | 22                       |
-| ``--yandex-ssh-user`` or ``$YC_SSH_USER``               | SSH username                                      | yc-user                  |
-| ``--yandex-static-address`` or ``$YC_STATIC_ADDRESS``   | Set public static IPv4 address                    |                          |
-| ``--yandex-subnet-id`` or ``$YC_SUBNET_ID``             | Subnet ID                                         |                          |
-| ``--yandex-token`` or ``$YC_TOKEN``                     | Yandex.Cloud OAuth token or IAM token             |                          |
-| ``--yandex-use-internal-ip`` or ``$YC_USE_INTERNAL_IP`` | Use the internal Instance IP to communicate       | false                    |
-| ``--yandex-userdata`` or ``$YC_USERDATA``               | Path to file with cloud-init user-data            |                          |
-| ``--yandex-zone`` or ``$YC_ZONE``                       | Yandex.Cloud zone                                 | ru-central1-a            |
+- `--yandex-cloud-id`: Cloud ID
+- `--yandex-cores`: Count of virtual CPUs
+- `--yandex-core-fraction`: Core fraction
+- `--yandex-disk-size`: Disk size in gigabytes
+- `--yandex-disk-type`: Disk type, e.g. 'network-hdd'
+- `--yandex-endpoint`: Yandex.Cloud API Endpoint
+- `--yandex-folder-id`: Folder ID
+- `--yandex-image-family`: Image family name to lookup image ID for instance
+- `--yandex-image-folder-id`: Folder ID to the latest image by family name
+- `--yandex-image-id`: User-defined Image ID
+- `--yandex-labels`: Instance labels in 'key=value' format
+- `--yandex-memory`: Memory in gigabytes
+- `--yandex-nat`: Assign external (NAT) IP address
+- `--yandex-platform-id`: ID of the hardware platform configuration
+- `--yandex-preemptible`: Yandex.Cloud Instance preemptibility flag
+- `--yandex-sa-key-file`: Yandex.Cloud Service Account key file
+- `--yandex-security-groups`: Set security groups
+- `--yandex-ssh-port`: SSH port
+- `--yandex-ssh-user`: SSH username
+- `--yandex-static-address`: Set public static IPv4 address
+- `--yandex-subnet-id`: Subnet ID
+- `--yandex-token`: Yandex.Cloud OAuth token or IAM token
+- `--yandex-use-internal-ip`: Use the internal Instance IP to communicate
+- `--yandex-userdata`: Path to file with cloud-init user-data
+- `--yandex-zone`: Yandex.Cloud zone
+
+#### Environment variables and default values
+
+| CLI option                 | Environment variable | Default Value            |
+|----------------------------|----------------------|--------------------------|
+| `--yandex-cloud-id`        | YC_CLOUD_ID          |                          |
+| `--yandex-cores`           | YC_CORES             | 2                        |
+| `--yandex-core-fraction`   | YC_CORE_FRACTION     | 100                      |
+| `--yandex-disk-size`       | YC_DISK_SIZE         | 20                       |
+| `--yandex-disk-type`       | YC_DISK_TYPE         | network-hdd              |
+| `--yandex-endpoint`        | YC_ENDPOINT          | api.cloud.yandex.net:443 |
+| `--yandex-folder-id`       | YC_FOLDER_ID         |                          |
+| `--yandex-image-family`    | YC_IMAGE_FAMILY      | ubuntu-1604-lts          |
+| `--yandex-image-folder-id` | YC_IMAGE_FOLDER_ID   | standard-images          |
+| `--yandex-image-id`        | YC_IMAGE_ID          |                          |
+| `--yandex-labels`          | YC_LABELS            |                          |
+| `--yandex-memory`          | YC_MEMORY            | 1                        |
+| `--yandex-nat`             | YC_NAT               | false                    |
+| `--yandex-platform-id`     | YC_PLATFORM_ID       | standard-v1              |
+| `--yandex-preemptible`     | YC_PREEMPTIBLE       | false                    |
+| `--yandex-sa-key-file`     | YC_SA_KEY_FILE       |                          |
+| `--yandex-security-groups` | YC_SECURITY_GROUPS   |                          |
+| `--yandex-ssh-port`        | YC_SSH_PORT          | 22                       |
+| `--yandex-ssh-user`        | YC_SSH_USER          | yc-user                  |
+| `--yandex-static-address`  | YC_STATIC_ADDRESS    |                          |
+| `--yandex-subnet-id`       | YC_SUBNET_ID         |                          |
+| `--yandex-token`           | YC_TOKEN             |                          |
+| `--yandex-use-internal-ip` | YC_USE_INTERNAL_IP   | false                    |
+| `--yandex-userdata`        | YC_USERDATA          |                          |
+| `--yandex-zone`            | YC_ZONE              | ru-central1-a            |
 ---
