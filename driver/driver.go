@@ -28,30 +28,31 @@ type Driver struct {
 	ServiceAccountKeyFile string
 	Token                 string
 
-	CloudID        string
-	Cores          int
-	CoreFraction   int
-	DiskSize       int
-	DiskType       string
-	FolderID       string
-	ImageFamily    string
-	ImageFolderID  string
-	ImageID        string
-	InstanceID     string
-	Labels         []string
-	Memory         int
-	Metadata       map[string]string
-	Nat            bool
-	PlatformID     string
-	Preemptible    bool
-	SSHUser        string
-	SubnetID       string
-	UseIPv6        bool
-	UseInternalIP  bool
-	UserDataFile   string
-	Zone           string
-	StaticAddress  string
-	SecurityGroups []string
+	CloudID          string
+	Cores            int
+	CoreFraction     int
+	DiskSize         int
+	DiskType         string
+	FolderID         string
+	ImageFamily      string
+	ImageFolderID    string
+	ImageID          string
+	InstanceID       string
+	Labels           []string
+	Memory           int
+	Metadata         map[string]string
+	Nat              bool
+	PlatformID       string
+	Preemptible      bool
+	SSHUser          string
+	SubnetID         string
+	UseIPv6          bool
+	UseInternalIP    bool
+	UserDataFile     string
+	Zone             string
+	StaticAddress    string
+	SecurityGroups   []string
+	ServiceAccountID string
 }
 
 const (
@@ -229,6 +230,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "yandex-security-groups",
 			Usage:  "Set security groups",
 		},
+		mcnflag.StringFlag{
+			EnvVar: "YC_SA_ID",
+			Name:   "yandex-sa-id",
+			Usage:  "Yandex.Cloud service account to use for authentication inside the instance",
+		},
 	}
 }
 
@@ -267,6 +273,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.Zone = flags.String("yandex-zone")
 	d.StaticAddress = flags.String("yandex-static-address")
 	d.SecurityGroups = flags.StringSlice("yandex-security-groups")
+	d.ServiceAccountID = flags.String("yandex-sa-id")
 
 	return nil
 }
