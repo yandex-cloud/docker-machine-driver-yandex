@@ -233,7 +233,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 		mcnflag.StringFlag{
 			EnvVar: "YC_SA_ID",
 			Name:   "yandex-sa-id",
-			Usage:  "Yandex.Cloud service account to use for authentication inside the instance",
+			Usage:  "Service account ID to attach to the instance",
 		},
 	}
 }
