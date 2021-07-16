@@ -49,6 +49,7 @@ $ docker-machine create \
 - `--yandex-platform-id`: ID of the hardware platform configuration
 - `--yandex-preemptible`: Yandex.Cloud Instance preemptibility flag
 - `--yandex-sa-key-file`: Yandex.Cloud Service Account key file
+- `--yandex-sa-id`: Service account ID to attach to the instance
 - `--yandex-security-groups`: Set security groups
 - `--yandex-ssh-port`: SSH port
 - `--yandex-ssh-user`: SSH username
@@ -79,6 +80,7 @@ $ docker-machine create \
 | `--yandex-platform-id`     | YC_PLATFORM_ID       | standard-v1              |
 | `--yandex-preemptible`     | YC_PREEMPTIBLE       | false                    |
 | `--yandex-sa-key-file`     | YC_SA_KEY_FILE       |                          |
+| `--yandex-sa-id`           | YC_SA_ID             |                          |
 | `--yandex-security-groups` | YC_SECURITY_GROUPS   |                          |
 | `--yandex-ssh-port`        | YC_SSH_PORT          | 22                       |
 | `--yandex-ssh-user`        | YC_SSH_USER          | yc-user                  |
