@@ -3,13 +3,16 @@ package driver
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"net"
+	"net/http"
 	"os"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/log"
@@ -27,6 +30,7 @@ type Driver struct {
 	Endpoint              string
 	ServiceAccountKeyFile string
 	Token                 string
+	FetchToken            bool
 
 	CloudID          string
 	Cores            int
@@ -53,6 +57,7 @@ type Driver struct {
 	StaticAddress    string
 	SecurityGroups   []string
 	ServiceAccountID string
+	FetchTokenUrl    string
 }
 
 const (
@@ -61,13 +66,15 @@ const (
 	defaultDiskSize      = 20
 	defaultDiskType      = "network-hdd"
 	defaultEndpoint      = "api.cloud.yandex.net:443"
-	defaultImageFamily   = "ubuntu-1604-lts"
+	defaultImageFamily   = "ubuntu-2004-lts"
 	defaultImageFolderID = StandardImagesFolderID
 	defaultMemory        = 1
 	defaultPlatformID    = "standard-v1"
 	defaultSSHPort       = 22
 	defaultSSHUser       = "ubuntu"
 	defaultZone          = "ru-central1-a"
+	defaultFetchToken    = false
+	defaultFetchTokenUrl = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
 )
 
 func NewDriver() drivers.Driver {
@@ -78,6 +85,8 @@ func NewDriver() drivers.Driver {
 		DiskType:      defaultDiskType,
 		ImageFolderID: defaultImageFolderID,
 		ImageFamily:   defaultImageFamily,
+		FetchToken:    defaultFetchToken,
+		FetchTokenUrl: defaultFetchTokenUrl,
 		Memory:        defaultMemory,
 		Metadata:      map[string]string{},
 		PlatformID:    defaultPlatformID,
@@ -203,6 +212,17 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "yandex-token",
 			Usage:  "Yandex.Cloud OAuth token",
 		},
+		mcnflag.StringFlag{
+			EnvVar: "YC_FETCH_TOKEN_URL",
+			Name:   "yandex-fetch-token-url",
+			Usage:  "Yandex.Cloud OAuth token",
+			Value:  defaultFetchTokenUrl,
+		},
+		mcnflag.BoolFlag{
+			EnvVar: "YC_FETCH_TOKEN",
+			Name:   "yandex-fetch-token",
+			Usage:  "Fetch Yandex.Cloud OAuth token every execution",
+		},
 		mcnflag.BoolFlag{
 			EnvVar: "YC_USE_INTERNAL_IP",
 			Name:   "yandex-use-internal-ip",
@@ -244,12 +264,25 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 
 	d.ServiceAccountKeyFile = flags.String("yandex-sa-key-file")
 	d.Token = flags.String("yandex-token")
+	d.FetchToken = flags.Bool("yandex-fetch-token")
 
-	switch {
-	case d.Token != "" && d.ServiceAccountKeyFile != "":
-		return fmt.Errorf("Yandex.Cloud driver requires one of token or service account key file, not both")
-	case d.Token == "" && d.ServiceAccountKeyFile == "":
-		return fmt.Errorf("A token or service account key file must be specified")
+	credsGot := 0
+	if d.Token != "" {
+		credsGot++
+	}
+	if d.FetchToken {
+		credsGot++
+	}
+	if d.ServiceAccountKeyFile != "" {
+		credsGot++
+	}
+
+	if credsGot != 1 {
+		return fmt.Errorf("Yandex.Cloud driver requires one of token, service account key file, or FetchToken flag")
+	}
+
+	if d.FetchToken {
+		d.fetchToken()
 	}
 
 	d.Cores = flags.Int("yandex-cores")
@@ -287,6 +320,7 @@ func (d *Driver) PreCreateCheck() error {
 
 	c, err := d.buildClient()
 	if err != nil {
+		fmt.Println("PreCreateCheck Error:")
 		return err
 	}
 
@@ -296,6 +330,7 @@ func (d *Driver) PreCreateCheck() error {
 			log.Warn("Try guess cloud ID to use")
 			d.CloudID, err = d.guessCloudID()
 			if err != nil {
+				fmt.Println("guessCloudID:")
 				return err
 			}
 		}
@@ -303,6 +338,7 @@ func (d *Driver) PreCreateCheck() error {
 		log.Warnf("Try guess folder ID to use inside cloud %q", d.CloudID)
 		d.FolderID, err = d.guessFolderID()
 		if err != nil {
+			fmt.Println("guessFolderID:")
 			return err
 		}
 	}
@@ -622,6 +658,42 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 
 	return userData, nil
 }
+
+func (d *Driver) fetchToken() error {
+	log.Info("Fetching YC OAuth Token")
+	var tokenStruct struct {
+		Token string `json:"access_token"`
+	}
+	req, err := http.NewRequest(http.MethodGet, d.FetchTokenUrl, nil)
+	if err != nil {
+		log.Error("new request error", err)
+		return err
+	}
+	req.Header.Add("Metadata-Flavor", "Google")
+
+	client := http.Client{Timeout: time.Second * 5}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Error("do error", err)
+		return err
+	}
+	defer resp.Body.Close()
+
+	b, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Error("body read error:", err)
+		return err
+	}
+
+	json.Unmarshal(b, &tokenStruct)
+	fmt.Println("token struct:", tokenStruct)
+
+	d.Token = tokenStruct.Token
+
+	return nil
+}
+
+// {"access_token":"","expires_in":,"token_type":"Bearer"}
 
 func defaultUserData(sshUserName, sshPublicKey string) (string, error) {
 	type templateData struct {

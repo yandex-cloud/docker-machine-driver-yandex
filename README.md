@@ -56,6 +56,8 @@ $ docker-machine create \
 - `--yandex-static-address`: Set public static IPv4 address
 - `--yandex-subnet-id`: Subnet ID
 - `--yandex-token`: Yandex.Cloud OAuth token or IAM token
+- `--yandex-fetch-token`: Fetch Yandex.Cloud OAuth token every execution
+- `--yandex-fetch-token-url`: Fetch Yandex.Cloud OAuth token every execution
 - `--yandex-use-internal-ip`: Use the internal Instance IP to communicate
 - `--yandex-userdata`: Path to file with cloud-init user-data
 - `--yandex-zone`: Yandex.Cloud zone
@@ -87,6 +89,8 @@ $ docker-machine create \
 | `--yandex-static-address`  | YC_STATIC_ADDRESS    |                          |
 | `--yandex-subnet-id`       | YC_SUBNET_ID         |                          |
 | `--yandex-token`           | YC_TOKEN             |                          |
+| `--yandex-fetch-token`     | YC_FETCH_TOKEN       | false                    |
+| `--yandex-fetch-token-url` | YC_FETCH_TOKEN_URL   | http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token |
 | `--yandex-use-internal-ip` | YC_USE_INTERNAL_IP   | false                    |
 | `--yandex-userdata`        | YC_USERDATA          |                          |
 | `--yandex-zone`            | YC_ZONE              | ru-central1-a            |
