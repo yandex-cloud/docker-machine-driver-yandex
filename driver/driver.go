@@ -316,7 +316,6 @@ func (d *Driver) PreCreateCheck() error {
 
 	c, err := d.buildClient()
 	if err != nil {
-		fmt.Println("PreCreateCheck Error:")
 		return err
 	}
 
@@ -326,7 +325,6 @@ func (d *Driver) PreCreateCheck() error {
 			log.Warn("Try guess cloud ID to use")
 			d.CloudID, err = d.guessCloudID()
 			if err != nil {
-				fmt.Println("guessCloudID:")
 				return err
 			}
 		}
@@ -334,7 +332,6 @@ func (d *Driver) PreCreateCheck() error {
 		log.Warnf("Try guess folder ID to use inside cloud %q", d.CloudID)
 		d.FolderID, err = d.guessFolderID()
 		if err != nil {
-			fmt.Println("guessFolderID:")
 			return err
 		}
 	}
@@ -682,7 +679,6 @@ func (d *Driver) fetchToken() (string, error) {
 	}
 
 	json.Unmarshal(b, &tokenStruct)
-	fmt.Println("token struct:", tokenStruct)
 
 	return tokenStruct.Token, nil
 }
