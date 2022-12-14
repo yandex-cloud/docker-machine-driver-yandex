@@ -6,7 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net"
 	"net/http"
 	"os"
@@ -374,7 +374,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	publicKey, err := ioutil.ReadFile(d.publicSSHKeyPath())
+	publicKey, err := os.ReadFile(d.publicSSHKeyPath())
 	if err != nil {
 		return err
 	}
@@ -639,7 +639,7 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 
 	if d.UserDataFile != "" {
 		log.Infof("Use provided file %q with user-data", d.UserDataFile)
-		buf, err := ioutil.ReadFile(d.UserDataFile)
+		buf, err := os.ReadFile(d.UserDataFile)
 		if err != nil {
 			return "", err
 		}
@@ -672,13 +672,16 @@ func (d *Driver) fetchToken() (string, error) {
 	}
 	defer resp.Body.Close()
 
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		log.Error("body read error:", err)
 		return "", err
 	}
 
-	json.Unmarshal(b, &tokenStruct)
+	err = json.Unmarshal(b, &tokenStruct)
+	if err != nil {
+		return "", err
+	}
 
 	return tokenStruct.Token, nil
 }

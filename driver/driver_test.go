@@ -1,7 +1,7 @@
 package driver
 
 import (
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -78,7 +78,7 @@ users:
 				require.Error(t, e, "error expected")
 			} else {
 				require.NoError(t, e, "no error expected, got one")
-				content, err := ioutil.ReadFile("testdata/" + tt.golden + ".golden")
+				content, err := os.ReadFile("testdata/" + tt.golden + ".golden")
 				if err != nil {
 					t.Fatalf("Error loading golden file: %s", err)
 				}
