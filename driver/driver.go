@@ -281,10 +281,6 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 		return fmt.Errorf("Yandex.Cloud driver requires one of token, service account key file, or FetchToken flag")
 	}
 
-	if d.FetchToken {
-		d.fetchToken()
-	}
-
 	d.Cores = flags.Int("yandex-cores")
 	d.CoreFraction = flags.Int("yandex-core-fraction")
 	d.DiskSize = flags.Int("yandex-disk-size")
@@ -659,7 +655,7 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 	return userData, nil
 }
 
-func (d *Driver) fetchToken() error {
+func (d *Driver) fetchToken() (string, error) {
 	log.Info("Fetching YC OAuth Token")
 	var tokenStruct struct {
 		Token string `json:"access_token"`
@@ -667,7 +663,7 @@ func (d *Driver) fetchToken() error {
 	req, err := http.NewRequest(http.MethodGet, d.FetchTokenUrl, nil)
 	if err != nil {
 		log.Error("new request error", err)
-		return err
+		return "", err
 	}
 	req.Header.Add("Metadata-Flavor", "Google")
 
@@ -675,22 +671,20 @@ func (d *Driver) fetchToken() error {
 	resp, err := client.Do(req)
 	if err != nil {
 		log.Error("do error", err)
-		return err
+		return "", err
 	}
 	defer resp.Body.Close()
 
 	b, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		log.Error("body read error:", err)
-		return err
+		return "", err
 	}
 
 	json.Unmarshal(b, &tokenStruct)
 	fmt.Println("token struct:", tokenStruct)
 
-	d.Token = tokenStruct.Token
-
-	return nil
+	return tokenStruct.Token, nil
 }
 
 // {"access_token":"","expires_in":,"token_type":"Bearer"}

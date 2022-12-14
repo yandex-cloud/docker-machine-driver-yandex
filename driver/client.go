@@ -139,20 +139,29 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 }
 
 func NewYCClient(d *Driver) (*YCClient, error) {
-	if d.Token != "" && d.ServiceAccountKeyFile != "" {
+	token, serviceAccountKeyFile := d.Token, d.ServiceAccountKeyFile
+	if d.FetchToken {
+		var err error
+		token, err = d.fetchToken()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if token != "" && serviceAccountKeyFile != "" {
 		return nil, errors.New("one of token or service account key file must be specified, not both")
 	}
 
 	var credentials ycsdk.Credentials
 	switch {
-	case d.Token != "":
-		if strings.HasPrefix(d.Token, "t1.") && strings.Count(d.Token, ".") == 2 {
-			credentials = ycsdk.NewIAMTokenCredentials(d.Token)
+	case token != "":
+		if strings.HasPrefix(token, "t1.") && strings.Count(token, ".") == 2 {
+			credentials = ycsdk.NewIAMTokenCredentials(token)
 		} else {
-			credentials = ycsdk.OAuthToken(d.Token)
+			credentials = ycsdk.OAuthToken(token)
 		}
-	case d.ServiceAccountKeyFile != "":
-		key, err := iamkey.ReadFromJSONFile(d.ServiceAccountKeyFile)
+	case serviceAccountKeyFile != "":
+		key, err := iamkey.ReadFromJSONFile(serviceAccountKeyFile)
 		if err != nil {
 			return nil, err
 		}
