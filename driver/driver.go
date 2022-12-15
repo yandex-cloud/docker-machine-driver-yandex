@@ -3,12 +3,9 @@ package driver
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"net"
-	"net/http"
 	"os"
 	"strings"
 	"text/template"
@@ -22,6 +19,8 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/resourcemanager/v1"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/vpc/v1"
+	ycsdk "github.com/yandex-cloud/go-sdk"
+	"github.com/yandex-cloud/go-sdk/iamkey"
 )
 
 type Driver struct {
@@ -30,7 +29,6 @@ type Driver struct {
 	Endpoint              string
 	ServiceAccountKeyFile string
 	Token                 string
-	FetchToken            bool
 
 	CloudID          string
 	Cores            int
@@ -74,7 +72,6 @@ const (
 	defaultSSHUser       = "ubuntu"
 	defaultZone          = "ru-central1-a"
 	defaultFetchToken    = false
-	defaultFetchTokenUrl = "http://169.254.169.254/computeMetadata/v1/instance/service-accounts/default/token"
 )
 
 func NewDriver() drivers.Driver {
@@ -85,8 +82,6 @@ func NewDriver() drivers.Driver {
 		DiskType:      defaultDiskType,
 		ImageFolderID: defaultImageFolderID,
 		ImageFamily:   defaultImageFamily,
-		FetchToken:    defaultFetchToken,
-		FetchTokenUrl: defaultFetchTokenUrl,
 		Memory:        defaultMemory,
 		Metadata:      map[string]string{},
 		PlatformID:    defaultPlatformID,
@@ -212,17 +207,6 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "yandex-token",
 			Usage:  "Yandex.Cloud OAuth token",
 		},
-		mcnflag.StringFlag{
-			EnvVar: "YC_FETCH_TOKEN_URL",
-			Name:   "yandex-fetch-token-url",
-			Usage:  "Yandex.Cloud OAuth token",
-			Value:  defaultFetchTokenUrl,
-		},
-		mcnflag.BoolFlag{
-			EnvVar: "YC_FETCH_TOKEN",
-			Name:   "yandex-fetch-token",
-			Usage:  "Fetch Yandex.Cloud OAuth token every execution",
-		},
 		mcnflag.BoolFlag{
 			EnvVar: "YC_USE_INTERNAL_IP",
 			Name:   "yandex-use-internal-ip",
@@ -264,22 +248,6 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 
 	d.ServiceAccountKeyFile = flags.String("yandex-sa-key-file")
 	d.Token = flags.String("yandex-token")
-	d.FetchToken = flags.Bool("yandex-fetch-token")
-
-	credsGot := 0
-	if d.Token != "" {
-		credsGot++
-	}
-	if d.FetchToken {
-		credsGot++
-	}
-	if d.ServiceAccountKeyFile != "" {
-		credsGot++
-	}
-
-	if credsGot != 1 {
-		return fmt.Errorf("Yandex.Cloud driver requires one of token, service account key file, or FetchToken flag")
-	}
 
 	d.Cores = flags.Int("yandex-cores")
 	d.CoreFraction = flags.Int("yandex-core-fraction")
@@ -652,41 +620,44 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 	return userData, nil
 }
 
-func (d *Driver) fetchToken() (string, error) {
-	log.Info("Fetching YC OAuth Token")
-	var tokenStruct struct {
-		Token string `json:"access_token"`
-	}
-	req, err := http.NewRequest(http.MethodGet, d.FetchTokenUrl, nil)
-	if err != nil {
-		log.Error("new request error", err)
-		return "", err
-	}
-	req.Header.Add("Metadata-Flavor", "Google")
-
-	client := http.Client{Timeout: time.Second * 5}
-	resp, err := client.Do(req)
-	if err != nil {
-		log.Error("do error", err)
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	b, err := io.ReadAll(resp.Body)
-	if err != nil {
-		log.Error("body read error:", err)
-		return "", err
+func (d *Driver) Credentials() (ycsdk.Credentials, error) {
+	if d.ServiceAccountKeyFile != "" && d.Token != "" {
+		return nil, fmt.Errorf("only one of 'token' or 'sa-key-file' should be specified")
 	}
 
-	err = json.Unmarshal(b, &tokenStruct)
-	if err != nil {
-		return "", err
+	if d.ServiceAccountKeyFile != "" {
+		key, err := iamkey.ReadFromJSONFile(d.ServiceAccountKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		return ycsdk.ServiceAccountKey(key)
 	}
 
-	return tokenStruct.Token, nil
+	if d.Token != "" {
+		if strings.HasPrefix(d.Token, "t1.") && strings.Count(d.Token, ".") == 2 {
+			return ycsdk.NewIAMTokenCredentials(d.Token), nil
+		}
+		return ycsdk.OAuthToken(d.Token), nil
+	}
+
+	if sa := ycsdk.InstanceServiceAccount(); checkServiceAccountAvailable(context.Background(), sa) {
+		fmt.Println("Trying to get Instance Service Account.")
+		return sa, nil
+	}
+
+	return nil, fmt.Errorf("one of 'token' or 'sa-key-file' should be specified; if you are inside compute instance, you can attach service account to it in order to authenticate via instance service account")
 }
 
-// {"access_token":"","expires_in":,"token_type":"Bearer"}
+func checkServiceAccountAvailable(ctx context.Context, sa ycsdk.NonExchangeableCredentials) bool {
+	dialer := net.Dialer{Timeout: 50 * time.Millisecond}
+	conn, err := dialer.Dial("tcp", net.JoinHostPort(ycsdk.InstanceMetadataAddr, "80"))
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	_, err = sa.IAMToken(ctx)
+	return err == nil
+}
 
 func defaultUserData(sshUserName, sshPublicKey string) (string, error) {
 	type templateData struct {
