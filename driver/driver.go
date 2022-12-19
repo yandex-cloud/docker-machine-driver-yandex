@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"strings"
 	"text/template"
+	"time"
 
 	"github.com/docker/machine/libmachine/drivers"
 	"github.com/docker/machine/libmachine/log"
@@ -19,6 +19,8 @@ import (
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/resourcemanager/v1"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/vpc/v1"
+	ycsdk "github.com/yandex-cloud/go-sdk"
+	"github.com/yandex-cloud/go-sdk/iamkey"
 )
 
 type Driver struct {
@@ -61,7 +63,7 @@ const (
 	defaultDiskSize      = 20
 	defaultDiskType      = "network-hdd"
 	defaultEndpoint      = "api.cloud.yandex.net:443"
-	defaultImageFamily   = "ubuntu-1604-lts"
+	defaultImageFamily   = "ubuntu-2004-lts"
 	defaultImageFolderID = StandardImagesFolderID
 	defaultMemory        = 1
 	defaultPlatformID    = "standard-v1"
@@ -245,13 +247,6 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.ServiceAccountKeyFile = flags.String("yandex-sa-key-file")
 	d.Token = flags.String("yandex-token")
 
-	switch {
-	case d.Token != "" && d.ServiceAccountKeyFile != "":
-		return fmt.Errorf("Yandex.Cloud driver requires one of token or service account key file, not both")
-	case d.Token == "" && d.ServiceAccountKeyFile == "":
-		return fmt.Errorf("A token or service account key file must be specified")
-	}
-
 	d.Cores = flags.Int("yandex-cores")
 	d.CoreFraction = flags.Int("yandex-core-fraction")
 	d.DiskSize = flags.Int("yandex-disk-size")
@@ -345,7 +340,7 @@ func (d *Driver) Create() error {
 		return err
 	}
 
-	publicKey, err := ioutil.ReadFile(d.publicSSHKeyPath())
+	publicKey, err := os.ReadFile(d.publicSSHKeyPath())
 	if err != nil {
 		return err
 	}
@@ -610,7 +605,7 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 
 	if d.UserDataFile != "" {
 		log.Infof("Use provided file %q with user-data", d.UserDataFile)
-		buf, err := ioutil.ReadFile(d.UserDataFile)
+		buf, err := os.ReadFile(d.UserDataFile)
 		if err != nil {
 			return "", err
 		}
@@ -621,6 +616,45 @@ func (d *Driver) prepareUserData(publicKey string) (string, error) {
 	}
 
 	return userData, nil
+}
+
+func (d *Driver) Credentials() (ycsdk.Credentials, error) {
+	if d.ServiceAccountKeyFile != "" && d.Token != "" {
+		return nil, fmt.Errorf("only one of 'token' or 'sa-key-file' should be specified")
+	}
+
+	if d.ServiceAccountKeyFile != "" {
+		key, err := iamkey.ReadFromJSONFile(d.ServiceAccountKeyFile)
+		if err != nil {
+			return nil, err
+		}
+		return ycsdk.ServiceAccountKey(key)
+	}
+
+	if d.Token != "" {
+		if strings.HasPrefix(d.Token, "t1.") && strings.Count(d.Token, ".") == 2 {
+			return ycsdk.NewIAMTokenCredentials(d.Token), nil
+		}
+		return ycsdk.OAuthToken(d.Token), nil
+	}
+
+	if sa := ycsdk.InstanceServiceAccount(); checkServiceAccountAvailable(context.Background(), sa) {
+		fmt.Println("Trying to get Instance Service Account.")
+		return sa, nil
+	}
+
+	return nil, fmt.Errorf("one of 'token' or 'sa-key-file' should be specified; if you are inside compute instance, you can attach service account to it in order to authenticate via instance service account")
+}
+
+func checkServiceAccountAvailable(ctx context.Context, sa ycsdk.NonExchangeableCredentials) bool {
+	dialer := net.Dialer{Timeout: 50 * time.Millisecond}
+	conn, err := dialer.Dial("tcp", net.JoinHostPort(ycsdk.InstanceMetadataAddr, "80"))
+	if err != nil {
+		return false
+	}
+	_ = conn.Close()
+	_, err = sa.IAMToken(ctx)
+	return err == nil
 }
 
 func defaultUserData(sshUserName, sshPublicKey string) (string, error) {

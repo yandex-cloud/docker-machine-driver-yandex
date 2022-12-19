@@ -33,6 +33,8 @@ $ docker-machine create \
 
 ## Options
 
+If you haven't specified yc-token nor yc-service-account-key-file it will try to get Instance Service Account.
+
 - `--yandex-cloud-id`: Cloud ID
 - `--yandex-cores`: Count of virtual CPUs
 - `--yandex-core-fraction`: Core fraction

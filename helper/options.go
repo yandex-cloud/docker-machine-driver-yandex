@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/docker/machine/libmachine/mcnflag"
 	"github.com/yandex-cloud/docker-machine-driver-yandex/driver"
 )

@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/c2h5oh/datasize"
 	"github.com/docker/machine/libmachine/log"
@@ -12,7 +11,6 @@ import (
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/yandex-cloud/go-genproto/yandex/cloud/compute/v1"
 	ycsdk "github.com/yandex-cloud/go-sdk"
-	"github.com/yandex-cloud/go-sdk/iamkey"
 	"github.com/yandex-cloud/go-sdk/pkg/requestid"
 	"github.com/yandex-cloud/go-sdk/pkg/retry"
 	"google.golang.org/grpc"
@@ -139,28 +137,9 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 }
 
 func NewYCClient(d *Driver) (*YCClient, error) {
-	if d.Token != "" && d.ServiceAccountKeyFile != "" {
-		return nil, errors.New("one of token or service account key file must be specified, not both")
-	}
-
-	var credentials ycsdk.Credentials
-	switch {
-	case d.Token != "":
-		if strings.HasPrefix(d.Token, "t1.") && strings.Count(d.Token, ".") == 2 {
-			credentials = ycsdk.NewIAMTokenCredentials(d.Token)
-		} else {
-			credentials = ycsdk.OAuthToken(d.Token)
-		}
-	case d.ServiceAccountKeyFile != "":
-		key, err := iamkey.ReadFromJSONFile(d.ServiceAccountKeyFile)
-		if err != nil {
-			return nil, err
-		}
-
-		credentials, err = ycsdk.ServiceAccountKey(key)
-		if err != nil {
-			return nil, err
-		}
+	credentials, err := d.Credentials()
+	if err != nil {
+		return nil, err
 	}
 
 	config := ycsdk.Config{
