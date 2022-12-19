@@ -55,7 +55,6 @@ type Driver struct {
 	StaticAddress    string
 	SecurityGroups   []string
 	ServiceAccountID string
-	FetchTokenUrl    string
 }
 
 const (
@@ -71,7 +70,6 @@ const (
 	defaultSSHPort       = 22
 	defaultSSHUser       = "ubuntu"
 	defaultZone          = "ru-central1-a"
-	defaultFetchToken    = false
 )
 
 func NewDriver() drivers.Driver {
