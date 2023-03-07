@@ -639,7 +639,6 @@ func (d *Driver) Credentials() (ycsdk.Credentials, error) {
 	}
 
 	if sa := ycsdk.InstanceServiceAccount(); checkServiceAccountAvailable(context.Background(), sa) {
-		fmt.Println("Trying to get Instance Service Account.")
 		return sa, nil
 	}
 
