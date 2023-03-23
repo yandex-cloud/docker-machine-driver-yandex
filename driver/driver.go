@@ -55,6 +55,7 @@ type Driver struct {
 	StaticAddress    string
 	SecurityGroups   []string
 	ServiceAccountID string
+	Filesystems     []string
 }
 
 const (
@@ -237,6 +238,11 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "yandex-sa-id",
 			Usage:  "Service account ID to attach to the instance",
 		},
+		mcnflag.StringSliceFlag{
+			EnvVar: "YC_FS",
+			Name:   "yandex-fs",
+			Usage:  "Filesystem to attach to the instance. Format 'deviceName=FilesystemID'",
+			},
 	}
 }
 
@@ -269,6 +275,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.StaticAddress = flags.String("yandex-static-address")
 	d.SecurityGroups = flags.StringSlice("yandex-security-groups")
 	d.ServiceAccountID = flags.String("yandex-sa-id")
+	d.Filesystems = flags.StringSlice("yandex-fs")
 
 	return nil
 }
@@ -571,6 +578,16 @@ func (d *Driver) ParsedLabels() map[string]string {
 		}
 	}
 	return labels
+}
+
+func (d *Driver) ParseFilesystems() map[string]string {
+	var filesystems = make(map[string]string)
+	for _, fsPair := range d.Filesystems {
+		fsPair = strings.TrimSpace(fsPair)
+		chunks := strings.SplitN(fsPair, "=", 2)
+		filesystems[chunks[0]] = chunks[1]
+	}
+	return filesystems
 }
 
 func (d *Driver) publicSSHKeyPath() string {
