@@ -55,7 +55,7 @@ type Driver struct {
 	StaticAddress    string
 	SecurityGroups   []string
 	ServiceAccountID string
-	Filesystems     []string
+	Filesystems      []string
 }
 
 const (
@@ -242,7 +242,7 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			EnvVar: "YC_FS",
 			Name:   "yandex-fs",
 			Usage:  "Filesystem to attach to the instance. Format 'deviceName=FilesystemID'",
-			},
+		},
 	}
 }
 
@@ -580,14 +580,17 @@ func (d *Driver) ParsedLabels() map[string]string {
 	return labels
 }
 
-func (d *Driver) ParseFilesystems() map[string]string {
+func (d *Driver) ParseFilesystems() (map[string]string, error) {
 	var filesystems = make(map[string]string)
 	for _, fsPair := range d.Filesystems {
 		fsPair = strings.TrimSpace(fsPair)
 		chunks := strings.SplitN(fsPair, "=", 2)
+		if len(chunks) < 2 {
+			return filesystems, fmt.Errorf("wrong filesystem flag format. Need use format deviceName=FilesystemID. Example: --yandex-fs='sharefs=fs_id'")
+		}
 		filesystems[chunks[0]] = chunks[1]
 	}
-	return filesystems
+	return filesystems, nil
 }
 
 func (d *Driver) publicSSHKeyPath() string {
