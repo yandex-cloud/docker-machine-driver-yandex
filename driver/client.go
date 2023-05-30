@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/c2h5oh/datasize"
 	"github.com/docker/machine/libmachine/log"
@@ -141,10 +142,10 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 			log.Infof("Error in filesystem format %q", err)
 			request.FilesystemSpecs = fsSpecs
 		} else {
-			for deviceName, fileSystemId := range fs {
+			for deviceName, fileSystem := range fs {
 				fsSpecs = append(fsSpecs, &compute.AttachedFilesystemSpec{
 					DeviceName:   deviceName,
-					FilesystemId: fileSystemId,
+					FilesystemId: fileSystem["filesystemId"],
 					Mode:         compute.AttachedFilesystemSpec_READ_WRITE,
 				})
 			}

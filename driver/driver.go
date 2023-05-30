@@ -580,15 +580,17 @@ func (d *Driver) ParsedLabels() map[string]string {
 	return labels
 }
 
-func (d *Driver) ParseFilesystems() (map[string]string, error) {
-	var filesystems = make(map[string]string)
+func (d *Driver) ParseFilesystems() (map[string]map[string]string, error) {
+	var filesystems = make(map[string]map[string]string)
 	for _, fsPair := range d.Filesystems {
 		fsPair = strings.TrimSpace(fsPair)
 		chunks := strings.SplitN(fsPair, "=", 2)
 		if len(chunks) < 2 {
-			return filesystems, fmt.Errorf("wrong filesystem flag format. Need use format deviceName=FilesystemID. Example: --yandex-fs='sharefs=fs_id'")
+			return filesystems, fmt.Errorf("wrong filesystem flag format. Need use format mountPath=FilesystemID. Example: --yandex-fs='/mnt/nfs=fs_id'")
 		}
-		filesystems[chunks[0]] = chunks[1]
+		fsPathList := strings.Split(chunks[0], "/")
+		fsName := fsPathList[len(fsPathList)-1]
+		filesystems[fsName] = map[string]string{"filesystemId": chunks[1], "filesystemPath": chunks[0]}
 	}
 	return filesystems, nil
 }
@@ -618,7 +620,8 @@ func (d *Driver) prepareInstanceMetadata(publicKey string) error {
 }
 
 func (d *Driver) prepareUserData(publicKey string) (string, error) {
-	userData, err := defaultUserData(d.GetSSHUsername(), publicKey)
+	filesystems, _ := d.ParseFilesystems()
+	userData, err := defaultUserData(d.GetSSHUsername(), publicKey, filesystems)
 	if err != nil {
 		return "", err
 	}
@@ -676,15 +679,17 @@ func checkServiceAccountAvailable(ctx context.Context, sa ycsdk.NonExchangeableC
 	return err == nil
 }
 
-func defaultUserData(sshUserName, sshPublicKey string) (string, error) {
+func defaultUserData(sshUserName, sshPublicKey string, fs map[string]map[string]string) (string, error) {
 	type templateData struct {
 		SSHUserName  string
 		SSHPublicKey string
+		Filesystems  map[string]map[string]string
 	}
 	buf := &bytes.Buffer{}
 	err := defaultUserDataTemplate.Execute(buf, templateData{
 		SSHUserName:  sshUserName,
 		SSHPublicKey: sshPublicKey,
+		Filesystems:  fs,
 	})
 	if err != nil {
 		return "", fmt.Errorf("error while process template: %s", err)
@@ -703,4 +708,12 @@ users:
     shell: /bin/bash
     ssh_authorized_keys:
       - {{.SSHPublicKey}}
+
+{{ if gt (len .Filesystems) 0}}
+runcmd:
+{{range $name, $fs := .Filesystems}}
+  - mkdir {{index $fs "filesystemPath"}}
+  - mount -t virtiofs {{ $name }} {{index $fs "filesystemPath"}}
+{{end}}
+{{end}}
 `))

@@ -61,7 +61,7 @@ If you haven't specified yc-token nor yc-service-account-key-file it will try to
 - `--yandex-use-internal-ip`: Use the internal Instance IP to communicate
 - `--yandex-userdata`: Path to file with cloud-init user-data
 - `--yandex-zone`: Yandex.Cloud zone
-- `--yandex-fs`: Filesystem to attach to the instance. Format 'deviceName=FilesystemID'
+- `--yandex-fs`: Filesystem to attach to the instance. Format 'mountPath=FilesystemID'
 
 #### Environment variables and default values
 
