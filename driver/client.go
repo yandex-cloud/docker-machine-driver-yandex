@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 
 	"github.com/c2h5oh/datasize"
 	"github.com/docker/machine/libmachine/log"
