@@ -13,6 +13,7 @@ func TestDriver_prepareInstanceMetadata(t *testing.T) {
 	type fields struct {
 		SSHUser      string
 		UserDataFile string
+		Filesystems  []string
 	}
 	tests := []struct {
 		name    string
@@ -39,9 +40,41 @@ users:
     shell: /bin/bash
     ssh_authorized_keys:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkai1XE7djYB5Z
+
+
 `,
 			},
 			golden: "no_user-data_input",
+		},
+		{
+			name: "fs-user-data",
+			fields: fields{
+				SSHUser:      "ubuntu",
+				UserDataFile: "",
+				Filesystems:  []string{"/data=qwdvj7dgfksdfd"},
+			},
+			wantErr: false,
+			wantMD: map[string]string{
+				"ssh-keys": "ubuntu:" + mockSshPublicKey,
+				"user-data": `#cloud-config
+ssh_pwauth: no
+
+users:
+- name: ubuntu
+sudo: ALL=(ALL) NOPASSWD:ALL
+shell: /bin/bash
+ssh_authorized_keys:
+- ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkai1XE7djYB5Z
+
+runcmd:
+
+- mkdir /data
+- mount -t virtiofs data /data
+
+
+`,
+			},
+			golden: "fs-user-data",
 		},
 		{
 			name: "user-data from file",
@@ -72,6 +105,7 @@ users:
 				Metadata:     map[string]string{},
 				SSHUser:      tt.fields.SSHUser,
 				UserDataFile: tt.fields.UserDataFile,
+				Filesystems:  tt.fields.Filesystems,
 			}
 			e := d.prepareInstanceMetadata(mockSshPublicKey)
 			if tt.wantErr {

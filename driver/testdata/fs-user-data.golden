@@ -9,3 +9,9 @@ users:
       - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDkai1XE7djYB5Z
 
 
+runcmd:
+
+  - mkdir /data
+  - mount -t virtiofs data /data
+
+
