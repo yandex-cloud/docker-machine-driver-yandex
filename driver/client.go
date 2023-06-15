@@ -133,6 +133,25 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 		}
 	}
 
+	if len(d.Filesystems) > 0 {
+		var fsSpecs []*compute.AttachedFilesystemSpec
+		fs, err := d.ParseFilesystems()
+		if err != nil {
+			//If error set empty Filesystems
+			log.Infof("Error in filesystem format %q", err)
+			request.FilesystemSpecs = fsSpecs
+		} else {
+			for deviceName, fileSystem := range fs {
+				fsSpecs = append(fsSpecs, &compute.AttachedFilesystemSpec{
+					DeviceName:   deviceName,
+					FilesystemId: fileSystem["filesystemId"],
+					Mode:         compute.AttachedFilesystemSpec_READ_WRITE,
+				})
+			}
+			request.FilesystemSpecs = fsSpecs
+		}
+	}
+
 	return request
 }
 
