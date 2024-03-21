@@ -37,6 +37,7 @@ If you haven't specified yc-token nor yc-service-account-key-file it will try to
 
 - `--yandex-cloud-id`: Cloud ID
 - `--yandex-cores`: Count of virtual CPUs
+- `--yandex-gpus`: Count of virtual GPUs
 - `--yandex-core-fraction`: Core fraction
 - `--yandex-disk-size`: Disk size in gigabytes
 - `--yandex-disk-type`: Disk type, e.g. 'network-hdd'
@@ -69,6 +70,7 @@ If you haven't specified yc-token nor yc-service-account-key-file it will try to
 |----------------------------|----------------------|--------------------------|
 | `--yandex-cloud-id`        | YC_CLOUD_ID          |                          |
 | `--yandex-cores`           | YC_CORES             | 2                        |
+| `--yandex-gpus`            | YC_GPUS              | 0                        |
 | `--yandex-core-fraction`   | YC_CORE_FRACTION     | 100                      |
 | `--yandex-disk-size`       | YC_DISK_SIZE         | 20                       |
 | `--yandex-disk-type`       | YC_DISK_TYPE         | network-hdd              |
