@@ -90,6 +90,7 @@ func prepareInstanceCreateRequest(d *Driver, imageID string) *compute.CreateInst
 		PlatformId: d.PlatformID,
 		ResourcesSpec: &compute.ResourcesSpec{
 			Cores:        int64(d.Cores),
+			Gpus:         int64(d.Gpus),
 			CoreFraction: int64(d.CoreFraction),
 			Memory:       toBytes(d.Memory),
 		},

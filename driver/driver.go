@@ -32,6 +32,7 @@ type Driver struct {
 
 	CloudID          string
 	Cores            int
+	Gpus			 int
 	CoreFraction     int
 	DiskSize         int
 	DiskType         string
@@ -59,6 +60,7 @@ type Driver struct {
 }
 
 const (
+	defaultGpus		 = 0
 	defaultCores         = 2
 	defaultCoreFraction  = 100
 	defaultDiskSize      = 20
@@ -77,6 +79,7 @@ func NewDriver() drivers.Driver {
 	return &Driver{
 		BaseDriver:    &drivers.BaseDriver{},
 		Cores:         defaultCores,
+		Gpus:		   defaultGpus,
 		DiskSize:      defaultDiskSize,
 		DiskType:      defaultDiskType,
 		ImageFolderID: defaultImageFolderID,
@@ -104,6 +107,12 @@ func (d *Driver) GetCreateFlags() []mcnflag.Flag {
 			Name:   "yandex-cores",
 			Usage:  "Count of virtual CPUs",
 			Value:  defaultCores,
+		},
+		mcnflag.IntFlag{
+			EnvVar: "YC_GPUS",
+			Name:   "yandex-gpus",
+			Usage:  "Count of virtual GPUs",
+			Value:  defaultGpus,
 		},
 		mcnflag.IntFlag{
 			EnvVar: "YC_CORE_FRACTION",
@@ -254,6 +263,7 @@ func (d *Driver) SetConfigFromFlags(flags drivers.DriverOptions) error {
 	d.Token = flags.String("yandex-token")
 
 	d.Cores = flags.Int("yandex-cores")
+	d.Gpus = flags.Int("yandex-gpus")
 	d.CoreFraction = flags.Int("yandex-core-fraction")
 	d.DiskSize = flags.Int("yandex-disk-size")
 	d.DiskType = flags.String("yandex-disk-type")
